@@ -1,7 +1,7 @@
 mod easy_html;
 
 mod tcp_server {
-    use std::{net::{TcpListener, TcpStream}, io::{Read, Write}};
+    use std::{net::{TcpListener, TcpStream}, io::{Read, Write, self}};
 
     use crate::easy_html;
 
@@ -34,24 +34,45 @@ mod tcp_server {
         Ok(())
     }
 
-    fn handle_connections(mut stream: TcpStream) {
-        const BUFFER_SIZE: usize = 1024; // if this = 1 we get a deadlock becuase .read always returns at least 1 (0 implies stream shutdown)
+    /// # read a TcpStream and return its contents
+    /// 
+    /// This function calls the std::io::read method on a std::net::TcpStream.
+    /// 
+    /// ## what is different from io::read?
+    /// 
+    /// The io::read method is called repeatedly until the length of the buffer
+    /// is greater than the number of bytes read. In other words, the contents of the stream
+    /// are all read and the user does not need to worry about defining an arbitrarily large buffer.
+    /// 
+    /// ## panics
+    /// 
+    /// This function should never panic
+    /// 
+    /// ## errors
+    /// 
+    /// 
+    fn dyn_read(stream: TcpStream) -> io::Result<Vec<u8>> {
+        // if this = 1 we get a deadlock becuase .read always returns at least 1 (0 implies the stream shutdown)
+        const BUFFER_SIZE: usize = 1024;
 
         // get bytes from the stream, read from stream until it is empty
         let mut bytes = Vec::new();
         loop {
             let mut buffer = [0; BUFFER_SIZE];
-            let bytes_read = stream.read(&mut buffer).unwrap();
+            let bytes_read = stream.read(&mut buffer)?;
 
-            bytes.write_all(&buffer[0..bytes_read]).unwrap();
+            bytes.write_all(&buffer[0..bytes_read])?;
 
             if bytes_read == BUFFER_SIZE {
                 continue;
             }
             else {
-                break;
+                break Ok(bytes);
             }
         }
+    }
+
+    fn handle_connections(mut stream: TcpStream) {
         
         let req_str = String::from_utf8_lossy(&bytes);
         println!("{:#?}", req_str);
