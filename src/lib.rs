@@ -35,18 +35,30 @@ mod tcp_server {
     }
 
     fn handle_connections(mut stream: TcpStream) {
-        // convert stream into ez html
-        let bytes: Vec<u8> = stream.try_clone().unwrap().bytes().map(|b| b.unwrap()).collect();
+        const BUFFER_SIZE: usize = 1024; // if this = 1 we get a deadlock becuase .read always returns at least 1 (0 implies stream shutdown)
 
-        let request_string= String::from_utf8_lossy(&bytes).to_string();
+        // get bytes from the stream, read from stream until it is empty
+        let mut bytes = Vec::new();
+        loop {
+            let mut buffer = [0; BUFFER_SIZE];
+            let bytes_read = stream.read(&mut buffer).unwrap();
 
-        let request: easy_html::Request = request_string.as_str().try_into().unwrap();
+            bytes.write_all(&buffer[0..bytes_read]).unwrap();
 
-        println!("{:#?}", request);
+            if bytes_read == BUFFER_SIZE {
+                continue;
+            }
+            else {
+                break;
+            }
+        }
+        
+        let req_str = String::from_utf8_lossy(&bytes);
+        println!("{:#?}", req_str);
 
-        let response = "HTTP/1.1 200 OK\r\n\r\n";
+        let response = "HTTP/1.1 200 OK\r\n\r\n".as_bytes();
 
-        stream.write(response.as_bytes()).unwrap();
+        stream.write(response).unwrap();
         stream.flush().unwrap();
     }
 
