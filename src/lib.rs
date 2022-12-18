@@ -40,17 +40,14 @@ mod tcp_server {
 
         let request_string= String::from_utf8_lossy(&bytes).to_string();
 
-        println!("{request_string}");
-
         let request: easy_html::Request = request_string.as_str().try_into().unwrap();
 
         println!("{:#?}", request);
 
-        let response = b"HTTP/1.1 200 OK\r\n\r\n";
+        let response = "HTTP/1.1 200 OK\r\n\r\n";
 
-        stream.write(response).unwrap();
+        stream.write(response.as_bytes()).unwrap();
         stream.flush().unwrap();
-
     }
 
 }
@@ -63,11 +60,11 @@ pub mod server {
 
     impl Server {
         pub fn start(port: u16) -> Self{
-            tcp_server::try_start(port);
+            tcp_server::try_start(port).unwrap();
             Server
         }
 
-        pub fn add_route<F>(&mut self, route: &str, f: F)
+        pub fn add_route<F>(&mut self, _route: &str, _f: F)
         where
             F: Fn(easy_html::Request) -> easy_html::Response
         {

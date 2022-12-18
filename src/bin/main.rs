@@ -5,11 +5,11 @@
 use rust_fedora::server::Server;
 
 fn main(){
-    let mut my_server: Server = Server::start(3000);
+    let _my_server: Server = Server::start(3000);
 
-    my_server.add_route("/", |data| {
-        return 200.into(); 
-    })
+    // my_server.add_route("/", |data| {
+    //     return 200.into(); 
+    // })
 }
 
 /*
