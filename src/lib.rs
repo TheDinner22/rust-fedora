@@ -1,7 +1,7 @@
 mod easy_html;
 
 mod tcp_server {
-    use std::{net::{TcpListener, TcpStream}, io::{Read, Write, self}};
+    use std::{net::{TcpListener, TcpStream}, io::{Read, Write, self, BufReader, BufRead}};
 
     use crate::easy_html;
 
@@ -51,25 +51,15 @@ mod tcp_server {
     /// ## errors
     /// 
     /// 
-    fn dyn_read(stream: TcpStream) -> io::Result<Vec<u8>> {
-        // if this = 1 we get a deadlock becuase .read always returns at least 1 (0 implies the stream shutdown)
-        const BUFFER_SIZE: usize = 1024;
+    fn dyn_read(mut stream: TcpStream) -> io::Result<Vec<String>> {
+        let buf_reader = BufReader::new(&mut stream);
 
-        // get bytes from the stream, read from stream until it is empty
-        let mut bytes = Vec::new();
-        loop {
-            let mut buffer = [0; BUFFER_SIZE];
-            let bytes_read = stream.read(&mut buffer)?;
+        let stream_contents = buf_reader
+            .lines()
+            .map(|result| result.ok())
+            .collect()
 
-            bytes.write_all(&buffer[0..bytes_read])?;
-
-            if bytes_read == BUFFER_SIZE {
-                continue;
-            }
-            else {
-                break Ok(bytes);
-            }
-        }
+        todo!()
     }
 
     fn handle_connections(mut stream: TcpStream) {
