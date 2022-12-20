@@ -51,21 +51,20 @@ mod tcp_server {
     /// ## errors
     /// 
     /// 
-    fn dyn_read(mut stream: TcpStream) -> io::Result<Vec<String>> {
+    fn try_read_lines(mut stream: &TcpStream) -> io::Result<Vec<String>> {
         let buf_reader = BufReader::new(&mut stream);
 
-        let stream_contents = buf_reader
+        // read the stream and create an iterator that reads over it line by line
+        // if every line is Ok, collect it into a Ok(Vec<String>)
+        // if any of the lines has an error, return an io::Err
+        // either way, return it
+        buf_reader
             .lines()
-            .map(|result| result.ok())
-            .collect()
-
-        todo!()
+            .collect::<io::Result<Vec<String>>>()
     }
 
     fn handle_connections(mut stream: TcpStream) {
-        
-        let req_str = String::from_utf8_lossy(&bytes);
-        println!("{:#?}", req_str);
+        let http_request = try_read_lines(&stream);
 
         let response = "HTTP/1.1 200 OK\r\n\r\n".as_bytes();
 
