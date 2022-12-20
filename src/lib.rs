@@ -60,11 +60,16 @@ mod tcp_server {
         // either way, return it
         buf_reader
             .lines()
+            .take_while(|result| {
+                !(result.as_ref().unwrap_or(&"some error".into()).is_empty()) // what the fuck
+            })
             .collect::<io::Result<Vec<String>>>()
     }
 
     fn handle_connections(mut stream: TcpStream) {
-        let http_request = try_read_lines(&stream);
+        let http_request = try_read_lines(&stream).expect("http_request was invalid");
+
+        println!("{:#?}", http_request);
 
         let response = "HTTP/1.1 200 OK\r\n\r\n".as_bytes();
 
