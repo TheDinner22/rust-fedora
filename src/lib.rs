@@ -34,21 +34,25 @@ mod tcp_server {
         Ok(())
     }
 
-    /// # read a TcpStream and return its contents
+    /// # read a TcpStream and return its contents as a Vec<String>
     /// 
-    /// This function calls the std::io::read method on a std::net::TcpStream.
+    /// This function uses a std::io::BufRead to read from a TcpStream.
     /// 
-    /// ## what is different from io::read?
+    /// ## what is different from std::io::BufRead.lines()?
     /// 
-    /// The io::read method is called repeatedly until the length of the buffer
-    /// is greater than the number of bytes read. In other words, the contents of the stream
-    /// are all read and the user does not need to worry about defining an arbitrarily large buffer.
+    /// 
     /// 
     /// ## panics
     /// 
     /// This function should never panic
     /// 
     /// ## errors
+    /// 
+    /// This function could return a std::io::Error.
+    /// That means that the error occured when reading the contents of the stream.
+    ///
+    ///  Most likely, the TcpStream did not contain valid utf8 strings
+    ///
     /// 
     /// 
     fn try_read_lines(mut stream: &TcpStream) -> io::Result<Vec<String>> {
@@ -73,8 +77,7 @@ mod tcp_server {
 
         let response = "HTTP/1.1 200 OK\r\n\r\n".as_bytes();
 
-        stream.write(response).unwrap();
-        stream.flush().unwrap();
+        stream.write_all(response).unwrap();
     }
 
 }
@@ -86,9 +89,9 @@ pub mod server {
     pub struct Server;
 
     impl Server {
-        pub fn start(port: u16) -> Self{
-            tcp_server::try_start(port).unwrap();
-            Server
+        pub fn start(port: u16) -> std::io::Result<Self>{
+            tcp_server::try_start(port)?;
+            Ok(Server)
         }
 
         pub fn add_route<F>(&mut self, _route: &str, _f: F)
