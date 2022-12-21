@@ -57,7 +57,7 @@ mod tcp_server {
             let mut buffer = [0; BUFFER_SIZE];
             let bytes_read = stream.read(&mut buffer)?;
 
-            bytes.write_all(&buffer)?;
+            bytes.write_all(&buffer[0..bytes_read])?;
 
             if bytes_read == BUFFER_SIZE {
                 continue;
