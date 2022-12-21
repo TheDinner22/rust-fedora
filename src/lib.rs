@@ -49,7 +49,7 @@ mod tcp_server {
     /// That means that the error occured when reading the contents of the stream.
     ///
     ///  Most likely, the TcpStream did not contain all valid utf8 strings
-    pub fn try_dyn_read(mut stream: &TcpStream) -> io::Result<String> {
+    pub fn try_dyn_read(mut stream: &TcpStream) -> io::Result<Vec<u8>> {
         const BUFFER_SIZE: usize = 1024;
 
         let mut bytes = Vec::new();
@@ -63,22 +63,11 @@ mod tcp_server {
                 continue;
             }
             else {
-                break;
+                break Ok(bytes);
             }
         }
 
-        match String::from_utf8(bytes) {
-            Ok(req_str) => {
-                Ok(req_str)
-            },
-            Err(_) => {
-                io::Result::Err(
-                    io::Error::new(
-                        io::ErrorKind::Other, "error converting bytes from stream into valid utf8"
-                    )
-                )
-            },
-        }
+        
     }
 
 
@@ -102,7 +91,7 @@ pub mod server {
             let server = Server { listener };
 
             for stream in server.listener.incoming() {
-                let stream = stream?;
+                let stream = stream.unwrap();
 
                 server.handle_connection(stream)?;
             }
@@ -113,7 +102,7 @@ pub mod server {
         fn handle_connection(&self, mut stream: TcpStream) -> io::Result<()> {
             let http_request = tcp_server::try_dyn_read(&stream)?;
 
-            println!("{:#?}", http_request);
+            println!("{}", http_request.len());
 
             let response = "HTTP/1.1 200 OK\r\n\r\n".as_bytes();
 
