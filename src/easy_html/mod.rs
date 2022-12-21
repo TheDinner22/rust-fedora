@@ -11,7 +11,6 @@ impl From<u16> for Response {
     }
 }
 
-#[derive(Debug)]
 pub struct Request<'a> {
     body: &'a str, // todo is it type String???
     headers: &'a str, // todo is it type String???
@@ -21,10 +20,10 @@ pub struct Request<'a> {
     http_ver: &'a str // todo is it type String???
 }
 
-impl<'a> TryFrom<&'a str> for Request<'a> {
-    type Error = String;
+impl<'a> TryFrom<Vec<u8>> for Request<'a> {
+    type Error;
 
-    fn try_from(value: &'a str) -> Result<Self, Self::Error> {
+    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
         todo!()
     }
 }
