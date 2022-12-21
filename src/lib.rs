@@ -1,9 +1,9 @@
 mod easy_html;
 
 mod tcp_server {
-    use std::{net::{TcpListener, TcpStream}, io::{Read, Write, self, BufReader, BufRead}};
+    use std::{net::{TcpListener, TcpStream}, io::{Write, self, BufReader, BufRead}};
 
-    use crate::easy_html;
+    // use crate::easy_html;
 
     /// attempt to bind a TcpListener to a port on 127.0.0.1
     /// 
@@ -20,18 +20,10 @@ mod tcp_server {
     /// # panics
     /// 
     /// This function never panics.
-    pub fn try_start(port: u16) -> std::io::Result<()>{
+    pub fn try_start(port: u16) -> std::io::Result<TcpListener>{
         let socket_str = String::from("127.0.01:") + &port.to_string();
 
-        let listener = TcpListener::bind(socket_str)?;
-
-        for stream in listener.incoming() {
-            let stream = stream.expect("for the stream to be good... todo!!");
-
-            handle_connections(stream);
-        }
-
-        Ok(())
+        TcpListener::bind(socket_str)
     }
 
     /// # read a TcpStream and return its contents as a Vec<String>
@@ -40,7 +32,12 @@ mod tcp_server {
     /// 
     /// ## what is different from std::io::BufRead.lines()?
     /// 
+    /// There is some internal logic which stops reading from the stream
+    /// once the http request has been fully recived.
     /// 
+    /// In short, calling the `lines` method will continue reading until
+    /// the connection closes (or its told to stop reading). This function
+    /// handles telling the `lines` method to stop reading.
     /// 
     /// ## panics
     /// 
@@ -51,54 +48,72 @@ mod tcp_server {
     /// This function could return a std::io::Error.
     /// That means that the error occured when reading the contents of the stream.
     ///
-    ///  Most likely, the TcpStream did not contain valid utf8 strings
-    ///
-    /// 
-    /// 
-    fn try_read_lines(mut stream: &TcpStream) -> io::Result<Vec<String>> {
-        let buf_reader = BufReader::new(&mut stream);
+    ///  Most likely, the TcpStream did not contain all valid utf8 strings
+    pub fn try_read_lines(stream: &TcpStream) -> io::Result<Vec<String>> {
+        let buf_reader = BufReader::new(stream);
 
         // read the stream and create an iterator that reads over it line by line
         // if every line is Ok, collect it into a Ok(Vec<String>)
         // if any of the lines has an error, return an io::Err
         // either way, return it
-        buf_reader
+        let http_request: io::Result<Vec<String>> = buf_reader
             .lines()
-            .take_while(|result| {
-                !(result.as_ref().unwrap_or(&"some error".into()).is_empty()) // what the fuck
-            })
-            .collect::<io::Result<Vec<String>>>()
+            .collect();
+
+        // shutdown reading from the stream, otherwise the line method will block the stream until the connection
+        // is dropped
+        stream.shutdown(std::net::Shutdown::Read)?;
+
+        http_request
     }
 
-    fn handle_connections(mut stream: TcpStream) {
-        let http_request = try_read_lines(&stream).expect("http_request was invalid");
-
-        println!("{:#?}", http_request);
-
-        let response = "HTTP/1.1 200 OK\r\n\r\n".as_bytes();
-
-        stream.write_all(response).unwrap();
-    }
 
 }
 
 pub mod server {
+    use std::net::{TcpListener, TcpStream};
+    use std::io::{self, Write};
+
     use super::easy_html;
     use super::tcp_server;
 
-    pub struct Server;
+    pub struct Server {
+        listener: TcpListener
+    }
 
     impl Server {
-        pub fn start(port: u16) -> std::io::Result<Self>{
-            tcp_server::try_start(port)?;
-            Ok(Server)
+        pub fn try_start(port: u16) -> std::io::Result<Self>{
+            let listener = tcp_server::try_start(port)?;
+
+            let server = Server { listener };
+
+            for stream in server.listener.incoming() {
+                let stream = stream?;
+
+                server.handle_connection(stream)?;
+            }
+
+            Ok(server)
         }
+
+        fn handle_connection(&self, mut stream: TcpStream) -> io::Result<()> {
+            let http_request = tcp_server::try_read_lines(&stream)?;
+
+            println!("{:#?}", http_request);
+
+            let response = "HTTP/1.1 200 OK\r\n\r\n".as_bytes();
+
+            stream.write_all(response)?;
+
+            Ok(())
+        }
+        
 
         pub fn add_route<F>(&mut self, _route: &str, _f: F)
         where
             F: Fn(easy_html::Request) -> easy_html::Response
         {
-            // todo!()
+            todo!()
         }
     }
 }
