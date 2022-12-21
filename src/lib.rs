@@ -1,7 +1,7 @@
 mod easy_html;
 
 mod tcp_server {
-    use std::{net::{TcpListener, TcpStream}, io::{Write, self, BufReader, BufRead}};
+    use std::{net::{TcpListener, TcpStream}, io::{self, Read, Write}, string::FromUtf8Error};
 
     // use crate::easy_html;
 
@@ -49,22 +49,36 @@ mod tcp_server {
     /// That means that the error occured when reading the contents of the stream.
     ///
     ///  Most likely, the TcpStream did not contain all valid utf8 strings
-    pub fn try_read_lines(stream: &TcpStream) -> io::Result<Vec<String>> {
-        let buf_reader = BufReader::new(stream);
+    pub fn try_dyn_read(mut stream: &TcpStream) -> io::Result<String> {
+        const BUFFER_SIZE: usize = 1024;
 
-        // read the stream and create an iterator that reads over it line by line
-        // if every line is Ok, collect it into a Ok(Vec<String>)
-        // if any of the lines has an error, return an io::Err
-        // either way, return it
-        let http_request: io::Result<Vec<String>> = buf_reader
-            .lines()
-            .collect();
+        let mut bytes = Vec::new();
+        loop {
+            let mut buffer = [0; BUFFER_SIZE];
+            let bytes_read = stream.read(&mut buffer)?;
 
-        // shutdown reading from the stream, otherwise the line method will block the stream until the connection
-        // is dropped
-        stream.shutdown(std::net::Shutdown::Read)?;
+            bytes.write_all(&buffer)?;
 
-        http_request
+            if bytes_read == BUFFER_SIZE {
+                continue;
+            }
+            else {
+                break;
+            }
+        }
+
+        match String::from_utf8(bytes) {
+            Ok(req_str) => {
+                Ok(req_str)
+            },
+            Err(_) => {
+                io::Result::Err(
+                    io::Error::new(
+                        io::ErrorKind::Other, "error converting bytes from stream into valid utf8"
+                    )
+                )
+            },
+        }
     }
 
 
@@ -97,7 +111,7 @@ pub mod server {
         }
 
         fn handle_connection(&self, mut stream: TcpStream) -> io::Result<()> {
-            let http_request = tcp_server::try_read_lines(&stream)?;
+            let http_request = tcp_server::try_dyn_read(&stream)?;
 
             println!("{:#?}", http_request);
 
