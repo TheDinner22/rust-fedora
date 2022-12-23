@@ -1,6 +1,5 @@
 // types which make working with html requests and responses bearable
 
-use std::rc::Rc;
 use std::collections::HashMap;
 
 enum Method {
@@ -39,16 +38,16 @@ impl From<u16> for Response {
     }
 }
 
-pub struct Request<'a> {
-    body: &'a str, // todo is it type String???
-    headers: &'a str, // todo is it type String???
-    query_string_object: &'a str, // todo is it type String???
-    path: &'a str, // todo is it type String???
-    method: &'a str,
-    http_ver: &'a str // todo is it type String???
+pub struct Request {
+    body: Option<String>,
+    headers: HashMap<String, String>,
+    query_string_object: Option<HashMap<String, String>>,
+    path: String, // todo is it type String???
+    method: Method,
+    http_ver: u8
 }
 
-impl<'a> Request<'a> {
+impl Request {
     fn parse_method(method_str: &str) -> Result<Method, String> {
         Method::try_from(method_str)
     }
@@ -100,9 +99,22 @@ impl<'a> Request<'a> {
             Err("invalid http request".to_string())
         }
     }
+
+    fn parse_head(request_as_lines: &Vec<&str>) -> Result<HashMap<String, String>, String> {
+        let mut lines_iter = request_as_lines.iter();
+        lines_iter.next(); // ignore first item
+
+        let header_map = lines_iter
+            .take_while(|line| !line.is_empty())
+            .filter_map(|line| line.split_once(":"))
+            .map(|(s1, s2)| (s1.trim().to_owned(), s2.trim().to_owned()))
+            .collect();
+
+        Ok(header_map)
+    }
 }
 
-impl<'a> TryFrom<Vec<u8>> for Request<'a> {
+impl TryFrom<Vec<u8>> for Request {
     type Error = String;
 
     fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
@@ -141,11 +153,22 @@ impl<'a> TryFrom<Vec<u8>> for Request<'a> {
             None => return Err("invalid http request".to_string()),
         };
 
-        // parse header
-
+        // parse headers
+        let headers = Request::parse_head(&lines)?;
+        
+        
         // parse body
+        let body_str = *lines.last().unwrap_or(&"");
 
-        Ok(Request { body: "", headers: "", query_string_object: "", path: "", method: "", http_ver: "" })
+        let body;
+        if body_str.is_empty() {
+            body = None;
+        }
+        else {
+            body = Some(body_str.to_string());
+        }
+
+        Ok(Request { body, headers, query_string_object: query_params, path: raw_path.to_string(), method, http_ver: http_sub_ver })
     }
 }
 
