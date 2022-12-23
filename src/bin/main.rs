@@ -5,7 +5,7 @@
 use rust_fedora::server::Server;
 
 fn main(){
-    let _my_server = Server::start(3000).unwrap();
+    let _my_server = Server::try_start(3000).unwrap();
 
     // my_server.add_route("/", |data| {
     //     return 200.into(); 

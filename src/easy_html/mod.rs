@@ -89,10 +89,11 @@ impl Request {
                 None => return Err("invalid http request".to_string()),
             };
 
+
             // try to parse the char into a u8
-            let sub_version: u8 = match sub_ver_char.try_into() {
-                Ok(version) => version,
-                Err(_) => return Err("invalid http request".to_string()),
+            let sub_version: u8 = match sub_ver_char.to_digit(10) {
+                Some(version) => version as u8,
+                None => return Err("invalid http request".to_string()),
             };
 
             Ok(sub_version)
