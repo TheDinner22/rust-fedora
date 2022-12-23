@@ -2,6 +2,7 @@
 
 use std::collections::HashMap;
 
+#[derive(Debug)]
 enum Method {
     Post,
     Get,
@@ -38,6 +39,7 @@ impl From<u16> for Response {
     }
 }
 
+#[derive(Debug)]
 pub struct Request {
     body: Option<String>,
     headers: HashMap<String, String>,
