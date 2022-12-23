@@ -77,6 +77,29 @@ impl<'a> Request<'a> {
 
         Some(query_map) // todo could this accidentally be empty?
     }
+
+    fn parse_http_ver(http_ver_str: &str) -> Result<u8, String> {
+        const EXPECT: &str = "HTTP/1.";
+
+        if http_ver_str.starts_with(EXPECT) {
+            // get the last character from the http request string
+            let sub_ver_char = match http_ver_str.chars().last() {
+                Some(char) => char,
+                None => return Err("invalid http request".to_string()),
+            };
+
+            // try to parse the char into a u8
+            let sub_version: u8 = match sub_ver_char.try_into() {
+                Ok(version) => version,
+                Err(_) => return Err("invalid http request".to_string()),
+            };
+
+            Ok(sub_version)
+        }
+        else {
+            Err("invalid http request".to_string())
+        }
+    }
 }
 
 impl<'a> TryFrom<Vec<u8>> for Request<'a> {
@@ -112,9 +135,13 @@ impl<'a> TryFrom<Vec<u8>> for Request<'a> {
         // further parse the query params into an Option<hashmap>
         let query_params = Request::parse_query_string(raw_query_string); 
 
-        // parse header
-
         // parse http ver as x where version is 1.x
+        let http_sub_ver = match first_line_words.next() {
+            Some(string) => Request::parse_http_ver(string)?,
+            None => return Err("invalid http request".to_string()),
+        };
+
+        // parse header
 
         // parse body
 
