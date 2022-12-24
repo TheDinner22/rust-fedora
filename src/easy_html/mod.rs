@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 enum Method {
     Post,
     Get,
@@ -15,14 +15,14 @@ impl Method {
     where
         T: ToString
     {
-        let val = value.to_string().trim().to_lowercase();
+        let val = value.to_string().to_lowercase();
 
         match val.as_str() {
             "post" => Ok(Method::Post),
             "get" => Ok(Method::Get),
             "put" => Ok(Method::Put),
             "delete" => Ok(Method::Delete),
-            _ => Err(String::from("invald http method"))
+            _ => Err(String::from("invalid http request"))
         }
     }
 }
@@ -129,7 +129,7 @@ impl TryFrom<Vec<u8>> for Request {
         let lines: Vec<&str> = http_string.split("\r\n").collect();
         let first_line = *lines.first().unwrap_or(&"");
 
-        // if the first line is empty, the request is bad!
+        // if the first line is empty, the request is bad! (todo refactor me!!)
         if first_line.is_empty() { return Err("invalid http request".to_string()) }
 
         let mut first_line_words = first_line.split_whitespace();
@@ -177,10 +177,43 @@ impl TryFrom<Vec<u8>> for Request {
 
 #[cfg(test)]
 mod tests {
+    use super::{Request, Method::{*, self}};
+
+    // attempt to parse the method from a string
     #[test]
-    fn it_works() {
-        let result = 2 + 2;
-        assert_eq!(result, 4);
+    fn parse_method_works(){
+        let inputs = ["get", "post", "put", "delete", "POST", "GeT"];
+        let expected_outputs = vec![Get, Post, Put, Delete, Post, Get];
+
+        // map inputs to outputs
+        let outputs: Vec<Method> = inputs
+            .into_iter()
+            .map( |input| Request::parse_method(input).unwrap() )
+            .collect();
+
+        assert_eq!(outputs, expected_outputs);
     }
-    // todo test all parsing funcitons
+
+    // pass bad input to be parsed
+    #[test]
+    fn parse_method_errs_as_expected(){
+        let inputs = ["get  ", "pst", "534378456jhkdfhks", "de lete", "P POST", "GeTPost"];
+        
+        let expected_outputs = vec![
+            String::from("invalid http request"),
+            String::from("invalid http request"),
+            String::from("invalid http request"),
+            String::from("invalid http request"),
+            String::from("invalid http request"),
+            String::from("invalid http request"),
+        ];
+        
+        // map inputs to outputs
+        let outputs: Vec<String> = inputs
+            .into_iter()
+            .map( |input| Request::parse_method(input).unwrap_err() )
+            .collect();
+
+        assert_eq!(outputs, expected_outputs);
+    }
 }
