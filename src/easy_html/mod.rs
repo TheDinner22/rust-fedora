@@ -216,4 +216,34 @@ mod tests {
 
         assert_eq!(outputs, expected_outputs);
     }
+
+    #[test]
+    fn parse_url_works(){
+        let inputs = vec![
+            "",
+            "/",
+            "/?name=joe",
+            "?name=joe",
+            "/path/poop/////",
+            "/soimetdfsjiofdfsfsfsfsfsdfggghgkjd??????????",
+        ];
+
+        let expected_outputs = [
+            ("/", "".to_string()),
+            ("/", "".to_string()),
+            ("/", "name=joe".to_string()),
+            ("/", "name=joe".to_string()),
+            ("/path/poop/////", "".to_string()),
+            ("/soimetdfsjiofdfsfsfsfsfsdfggghgkjd", "?????????".to_string()),
+        ];
+
+        let outputs: Vec<(&str, String)> = inputs
+            .into_iter()
+            .map( |url| Request::parse_url(url).unwrap() )
+            .collect();
+
+        assert_eq!(outputs, expected_outputs);
+    }
+
+    // todo work on tests for other parsing functions
 }
