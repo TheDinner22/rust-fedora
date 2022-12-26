@@ -66,10 +66,35 @@ impl Request {
         (raw_path, raw_params)
     }
 
+    /// parse a string containing query params
+    /// 
+    /// # Panics
+    /// 
+    /// This function should never panic
+    /// 
+    /// # Behavior
+    /// 
+    /// This function shoud
+    /// 
+    /// 1. Only return `Some<HashMap>` if there is at least one valid query parameter
+    /// 2. return `None` if there were no valid query parameters
+    /// 3. ignore invalid query parameters
+    /// 4 duplicate fields will be ignored! (only one will be returned in the hashmap)
+    /// 
+    /// That is, this function will never return an empty hashmap.
+    /// 
+    /// Additionally, in a query string such as
+    /// 
+    /// >
+    /// > "/path/page?&jsdhfsdfkj&&JHKJH&&&Jjgdfhk&name=joe"
+    /// >
+    /// 
+    /// the invalid parts of the string will be ignored.
+    /// 
     fn parse_query_string(query_params: &str) -> Option<HashMap<String, String>> {
         if query_params.is_empty() { return None;}
 
-        let query_map: HashMap<String, String> = query_params
+        let query_map: HashMap<_, _> = query_params
             .split("&")
             .filter_map(|pair| pair.split_once("="))
             .map(|(key, value)| (key.to_owned(), value.to_owned()))
@@ -177,6 +202,16 @@ impl TryFrom<Vec<u8>> for Request {
 #[cfg(test)]
 mod tests {
     use super::{Request, Method::{*, self}};
+    use std::collections::HashMap;
+
+    // helper function to construct hashmaps from keys
+    fn new_map<T, U>(pairs: Vec<(T, U)>) -> HashMap<T, U>
+    where
+        T: std::hash::Hash + std::cmp::Eq,
+        U: std::hash::Hash
+    {
+        pairs.into_iter().collect()
+    }
 
     // attempt to parse the method from a string
     #[test]
@@ -239,6 +274,40 @@ mod tests {
         let outputs: Vec<(&str, &str)> = inputs
             .into_iter()
             .map( |url| Request::parse_url(url) )
+            .collect();
+
+        assert_eq!(outputs, expected_outputs);
+    }
+
+    #[test]
+    fn parse_query_params_works(){
+        let inputs = [
+            "name=joe",
+            "name=1234&age=12",
+            "name=***",
+            "age=123&name=456&height= =tall= ",
+            "123=347",
+            "=123 ",
+            " 123=",
+            "=123&123="
+        ];
+
+        let expected_outputs = vec![
+            new_map(vec![("name", "joe")]),
+            new_map(vec![("name", "1234"), ("age", "12")]),
+            new_map(vec![("name", "***")]),
+            new_map(vec![("age", "123"), ("name", "456"), ("height", " =tall= ")]),
+            new_map(vec![("123", "347")]),
+            new_map(vec![("", "123 ")]),
+            new_map(vec![(" 123", "")]),
+            new_map(vec![("", "123"), ("123", "")]),
+        ];
+
+
+
+        let outputs: Vec<HashMap<String, String>> = inputs
+            .into_iter()
+            .map(|input| Request::parse_query_string(input).unwrap() )
             .collect();
 
         assert_eq!(outputs, expected_outputs);
