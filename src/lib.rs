@@ -12,9 +12,19 @@ mod tcp_server {
     /// # Examples
     /// 
     /// ```
+    /// use rust_fedora::tcp_server::try_start;
+    /// 
     /// let listener = try_start(3000).unwrap();
     /// 
-    /// for stream in listener.incoming { ... }
+    /// for stream in listener.incoming {
+    ///     let stream = stream.unwrap();
+    /// 
+    ///     let mut buffer = [0; 1024];
+    /// 
+    ///     stream.read(&mut buffer).unwrap();
+    /// 
+    ///     println!("{}", String::from_utf8_lossy(&buffer));
+    /// }
     /// ```
     /// 
     /// # panics
