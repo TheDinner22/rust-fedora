@@ -54,20 +54,19 @@ impl Request {
         Method::try_from(method_str)
     }
 
-    fn parse_url(url_string: &str) -> Result<(&str, String), String> {
-        let mut url_iter = url_string.split("?");
-        
-        let path = match url_iter.next() {
-            Some(string) => if string.is_empty() { "/" } else { string },
-            None => return Err("invalid http request".to_string()),
-        };
+    fn parse_url(url_string: &str) -> (&str, &str) {
+        let (mut raw_path, raw_params) = url_string
+            .split_once("?")
+            .unwrap_or( (url_string, "") );
 
-        let raw_query_params: String = url_iter.collect();
+        if raw_path.is_empty() {
+            raw_path = "/";
+        }
 
-        Ok((path, raw_query_params))
+        (raw_path, raw_params)
     }
 
-    fn parse_query_string(query_params: String) -> Option<HashMap<String, String>> {
+    fn parse_query_string(query_params: &str) -> Option<HashMap<String, String>> {
         if query_params.is_empty() { return None;}
 
         let query_map: HashMap<String, String> = query_params
@@ -143,7 +142,7 @@ impl TryFrom<Vec<u8>> for Request {
         // parse url to get the path and the query parameters (if any)
         // todo this assumes urls cannot contain "?" character (it should only be used for query string stuff)
         let (raw_path, raw_query_string) = match first_line_words.next() {
-            Some(string) => Request::parse_url(string)?,
+            Some(string) => Request::parse_url(string),
             None => return Err("invalid http request".to_string()),
         };
 
@@ -229,17 +228,17 @@ mod tests {
         ];
 
         let expected_outputs = [
-            ("/", "".to_string()),
-            ("/", "".to_string()),
-            ("/", "name=joe".to_string()),
-            ("/", "name=joe".to_string()),
-            ("/path/poop/////", "".to_string()),
-            ("/soimetdfsjiofdfsfsfsfsfsdfggghgkjd", "?????????".to_string()),
+            ("/", ""),
+            ("/", ""),
+            ("/", "name=joe"),
+            ("/", "name=joe"),
+            ("/path/poop/////", ""),
+            ("/soimetdfsjiofdfsfsfsfsfsdfggghgkjd", "?????????"),
         ];
 
-        let outputs: Vec<(&str, String)> = inputs
+        let outputs: Vec<(&str, &str)> = inputs
             .into_iter()
-            .map( |url| Request::parse_url(url).unwrap() )
+            .map( |url| Request::parse_url(url) )
             .collect();
 
         assert_eq!(outputs, expected_outputs);
