@@ -101,7 +101,7 @@ pub mod server {
             let server = Server { listener };
 
             for stream in server.listener.incoming() {
-                let stream = stream.unwrap();
+                let stream = stream.expect("stream was not valid!");
 
                 server.handle_connection(stream)?;
             }
