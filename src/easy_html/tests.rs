@@ -105,4 +105,7 @@ fn parse_query_params_works(){
     assert_eq!(outputs, expected_outputs);
 }
 
+// next make tests for the 4 behaviors of 
+// parse_query_params
+
 // todo work on tests for other parsing functions

@@ -5,31 +5,6 @@ mod tcp_server {
 
     // use crate::easy_html;
 
-    /// attempt to bind a TcpListener to a port on 127.0.0.1
-    /// 
-    /// port is the port to bind to (such as 3000 or 8080)
-    /// 
-    /// # Examples
-    /// 
-    /// ```
-    /// use rust_fedora::tcp_server::try_start;
-    /// 
-    /// let listener = try_start(3000).unwrap();
-    /// 
-    /// for stream in listener.incoming {
-    ///     let stream = stream.unwrap();
-    /// 
-    ///     let mut buffer = [0; 1024];
-    /// 
-    ///     stream.read(&mut buffer).unwrap();
-    /// 
-    ///     println!("{}", String::from_utf8_lossy(&buffer));
-    /// }
-    /// ```
-    /// 
-    /// # panics
-    /// 
-    /// This function never panics.
     pub fn try_start(port: u16) -> std::io::Result<TcpListener>{
         let socket_str = String::from("127.0.01:") + &port.to_string();
 
