@@ -198,3 +198,6 @@ impl<'req> TryFrom<&'req Vec<u8>> for Request<'req> {
         Ok(Request { body, headers, query_string_object: query_params, path: raw_path, method, http_ver: http_sub_ver })
     }
 }
+
+#[cfg(test)]
+mod tests;
