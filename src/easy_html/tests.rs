@@ -30,22 +30,19 @@ fn parse_method_works(){
 fn parse_method_errs_as_expected(){
     let inputs = ["get  ", "pst", "534378456jhkdfhks", "de lete", "P POST", "GeTPost"];
     
-    let expected_outputs = vec![
-        String::from("invalid http request"),
-        String::from("invalid http request"),
-        String::from("invalid http request"),
-        String::from("invalid http request"),
-        String::from("invalid http request"),
-        String::from("invalid http request"),
-    ];
-    
     // map inputs to outputs
-    let outputs: Vec<String> = inputs
+    let outputs: Vec<bool> = inputs
         .into_iter()
-        .map( |input| Request::parse_method(input).unwrap_err() )
+        .map( |input| Request::parse_method(input).is_err() )
         .collect();
 
-    assert_eq!(outputs, expected_outputs);
+    // every element in outputs should be true because
+    // every input should have caused an error
+    let is_all_true = outputs
+        .into_iter()
+        .all(|item| item);
+
+    assert_eq!(is_all_true, true);
 }
 
 #[test]
@@ -100,9 +97,7 @@ fn parse_query_params_works(){
         new_map(vec![("", "123"), ("123", "")]),
     ];
 
-
-
-    let outputs: Vec<HashMap<String, String>> = inputs
+    let outputs: Vec<HashMap<&str, &str>> = inputs
         .into_iter()
         .map(|input| Request::parse_query_string(input).unwrap() )
         .collect();
