@@ -1,7 +1,7 @@
 mod easy_html;
 
 mod tcp_server {
-    use std::{net::{TcpListener, TcpStream}, io::{self, Read, Write}, string::FromUtf8Error};
+    use std::{net::{TcpListener, TcpStream}, io::{self, Read, Write}};
 
     // use crate::easy_html;
 
