@@ -112,7 +112,7 @@ pub mod server {
         fn handle_connection(&self, mut stream: TcpStream) -> io::Result<()> {
             let http_request = tcp_server::try_dyn_read(&stream)?;
 
-            let request = match easy_html::Request::try_from(http_request) {
+            let request = match easy_html::Request::try_from(&http_request) {
                 Ok(req) => req,
                 Err(e) => return Err(io::Error::new(io::ErrorKind::Other, e)),
             };

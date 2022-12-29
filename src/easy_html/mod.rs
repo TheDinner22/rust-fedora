@@ -40,16 +40,16 @@ impl From<u16> for Response {
 }
 
 #[derive(Debug)]
-pub struct Request {
-    body: Option<String>,
-    headers: HashMap<String, String>,
-    query_string_object: Option<HashMap<String, String>>,
-    path: String, // todo is it type String???
+pub struct Request<'req> {
+    body: Option<&'req str>,
+    headers: Option<HashMap<&'req str, &'req str>>,
+    query_string_object: Option<HashMap<&'req str, &'req str>>,
+    path: &'req str, // todo is it type String???
     method: Method,
     http_ver: u8
 }
 
-impl Request {
+impl<'req> Request<'req> {
     fn parse_method(method_str: &str) -> Result<Method, String> {
         Method::try_from(method_str)
     }
@@ -91,13 +91,12 @@ impl Request {
     /// 
     /// the invalid parts of the string will be ignored.
     /// 
-    fn parse_query_string(query_params: &str) -> Option<HashMap<String, String>> {
+    fn parse_query_string(query_params: &str) -> Option<HashMap<&str, &str>> {
         if query_params.is_empty() { return None;}
 
         let query_map: HashMap<_, _> = query_params
             .split("&")
             .filter_map(|pair| pair.split_once("="))
-            .map(|(key, value)| (key.to_owned(), value.to_owned()))
             .collect();
 
         Some(query_map) // todo could this accidentally be empty?
@@ -106,46 +105,49 @@ impl Request {
     fn parse_http_ver(http_ver_str: &str) -> Result<u8, String> {
         const EXPECT: &str = "HTTP/1.";
 
-        if http_ver_str.starts_with(EXPECT) {
-            // get the last character from the http request string
-            let sub_ver_char = match http_ver_str.chars().last() {
-                Some(char) => char,
-                None => return Err("invalid http request".to_string()),
-            };
-
-
-            // try to parse the char into a u8
-            let sub_version: u8 = match sub_ver_char.to_digit(10) {
-                Some(version) => version as u8,
-                None => return Err("invalid http request".to_string()),
-            };
-
-            Ok(sub_version)
+        if !http_ver_str.starts_with(EXPECT) {
+            return Err("invalid http request".to_string())
         }
-        else {
-            Err("invalid http request".to_string())
-        }
+
+        // get the last character from the http request string
+        let sub_ver_char = match http_ver_str.chars().last() {
+            Some(char) => char,
+            None => return Err("invalid http request".to_string()),
+        };
+
+        // try to parse the char into a u8
+        let sub_version: u8 = match sub_ver_char.to_digit(10) {
+            Some(version) => version as u8,
+            None => return Err("invalid http request".to_string()),
+        };
+
+        Ok(sub_version)
     }
 
-    fn parse_head(request_as_lines: &Vec<&str>) -> Result<HashMap<String, String>, String> {
+    // todo are headers always given as key:value? what about commas??
+    fn parse_head(request_as_lines: &Vec<&'req str>) -> Option<HashMap<&'req str, &'req str>> {
         let mut lines_iter = request_as_lines.iter();
         lines_iter.next(); // ignore first item
 
-        let header_map = lines_iter
+        let header_map: HashMap<_, _> = lines_iter
             .take_while(|line| !line.is_empty())
             .filter_map(|line| line.split_once(":"))
-            .map(|(s1, s2)| (s1.trim().to_owned(), s2.trim().to_owned()))
             .collect();
 
-        Ok(header_map)
+        if header_map.is_empty() {
+            None
+        }
+        else {
+            Some(header_map)
+        }
     }
 }
 
-impl TryFrom<Vec<u8>> for Request {
+impl<'req> TryFrom<&'req Vec<u8>> for Request<'req> {
     type Error = String;
 
-    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
-        let http_string = match String::from_utf8(value) {
+    fn try_from(value: &'req Vec<u8>) -> Result<Self, Self::Error> {
+        let http_string = match std::str::from_utf8(value) {
             Ok(request) => request,
             Err(e) => return Err(e.to_string()),
         };
@@ -156,33 +158,30 @@ impl TryFrom<Vec<u8>> for Request {
         // if the first line is empty, the request is bad! (todo refactor me!!)
         if first_line.is_empty() { return Err("invalid http request".to_string()) }
 
-        let mut first_line_words = first_line.split_whitespace();
+        let first_line_words: Vec<&str> = first_line
+            .split_whitespace()
+            .collect();
+
+        if first_line_words.len() != 3 {
+            return Err("invalid http request".to_string())
+        }
 
         // parse method
-        let method = match first_line_words.next() {
-            Some(string) => Request::parse_method(string)?,
-            None => return Err("invalid http request".to_string()),
-        };
+        let method = Request::parse_method(first_line_words[0])?;
         
         // parse url to get the path and the query parameters (if any)
         // todo this assumes urls cannot contain "?" character (it should only be used for query string stuff)
-        let (raw_path, raw_query_string) = match first_line_words.next() {
-            Some(string) => Request::parse_url(string),
-            None => return Err("invalid http request".to_string()),
-        };
+        let (raw_path, raw_query_string) = Request::parse_url(first_line_words[1]);
 
         // further parse the query params into an Option<hashmap>
         let query_params = Request::parse_query_string(raw_query_string); 
 
         // parse http ver as x where version is 1.x
-        let http_sub_ver = match first_line_words.next() {
-            Some(string) => Request::parse_http_ver(string)?,
-            None => return Err("invalid http request".to_string()),
-        };
+        let http_sub_ver = Request::parse_http_ver(first_line_words[2])?;
 
         // parse headers
-        let headers = Request::parse_head(&lines)?;
-        
+        // todo why does this take the entire request if it only needs headers??
+        let headers = Request::parse_head(&lines);
         
         // parse body
         let body_str = *lines.last().unwrap_or(&"");
@@ -192,9 +191,9 @@ impl TryFrom<Vec<u8>> for Request {
             body = None;
         }
         else {
-            body = Some(body_str.to_string());
+            body = Some(body_str);
         }
 
-        Ok(Request { body, headers, query_string_object: query_params, path: raw_path.to_string(), method, http_ver: http_sub_ver })
+        Ok(Request { body, headers, query_string_object: query_params, path: raw_path, method, http_ver: http_sub_ver })
     }
 }
