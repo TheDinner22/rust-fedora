@@ -22,7 +22,7 @@ impl Method {
             "get" => Ok(Method::Get),
             "put" => Ok(Method::Put),
             "delete" => Ok(Method::Delete),
-            _ => Err(String::from("invalid http request"))
+            _ => Err(format!("invalid http method\ngot {}", val))
         }
     }
 }
@@ -106,25 +106,26 @@ impl<'req> Request<'req> {
         const EXPECT: &str = "HTTP/1.";
 
         if !http_ver_str.starts_with(EXPECT) {
-            return Err("invalid http request".to_string())
+            return Err(format!("invalid http version\ngot {}", http_ver_str))
         }
 
         // get the last character from the http request string
         let sub_ver_char = match http_ver_str.chars().last() {
             Some(char) => char,
-            None => return Err("invalid http request".to_string()),
+            None => return Err(format!("invalid http version\nhttp version was empty")),
         };
 
         // try to parse the char into a u8
         let sub_version: u8 = match sub_ver_char.to_digit(10) {
             Some(version) => version as u8,
-            None => return Err("invalid http request".to_string()),
+            None => return Err(format!("invalid http version\nunable to parse")),
         };
 
         Ok(sub_version)
     }
 
     // todo are headers always given as key:value? what about commas??
+    // todo bug with spaces
     fn parse_head(request_as_lines: &Vec<&'req str>) -> Option<HashMap<&'req str, &'req str>> {
         let mut lines_iter = request_as_lines.iter();
         lines_iter.next(); // ignore first item
@@ -156,14 +157,14 @@ impl<'req> TryFrom<&'req Vec<u8>> for Request<'req> {
         let first_line = *lines.first().unwrap_or(&"");
 
         // if the first line is empty, the request is bad! (todo refactor me!!)
-        if first_line.is_empty() { return Err("invalid http request".to_string()) }
+        if first_line.is_empty() { return Err(format!("invalid http request\nfirst line was empty!\nheres the request:\n\n{:#?}", lines)) }
 
         let first_line_words: Vec<&str> = first_line
             .split_whitespace()
             .collect();
 
         if first_line_words.len() != 3 {
-            return Err("invalid http request".to_string())
+            return Err("invalid http request\nFirst line was not formatted correctly".to_string())
         }
 
         // parse method
