@@ -99,7 +99,7 @@ fn parse_query_params_works(){
 
     let outputs: Vec<HashMap<&str, &str>> = inputs
         .into_iter()
-        .map(|input| Request::parse_query_string(input).unwrap() )
+        .map(|input| Request::parse_query_string(input) )
         .collect();
 
     assert_eq!(outputs, expected_outputs);
@@ -107,7 +107,5 @@ fn parse_query_params_works(){
 
 // next make tests for the 4 behaviors of 
 // parse_query_params
-
-// testing a change here
 
 // todo work on tests for other parsing functions

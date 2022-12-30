@@ -42,8 +42,8 @@ impl From<u16> for Response {
 #[derive(Debug)]
 pub struct Request<'req> {
     body: Option<&'req str>,
-    headers: Option<HashMap<&'req str, &'req str>>,
-    query_string_object: Option<HashMap<&'req str, &'req str>>,
+    headers: HashMap<&'req str, &'req str>,
+    query_string_object: HashMap<&'req str, &'req str>,
     path: &'req str, // todo is it type String???
     method: Method,
     http_ver: u8
@@ -76,14 +76,12 @@ impl<'req> Request<'req> {
     /// 
     /// This function shoud
     /// 
-    /// 1. Only return `Some<HashMap>` if there is at least one valid query parameter
-    /// 2. return `None` if there were no valid query parameters
-    /// 3. ignore invalid query parameters
-    /// 4 duplicate fields will be ignored! (only one will be returned in the hashmap)
+    /// 1. ignore invalid query parameters
+    /// 2. duplicate fields will be ignored! (only one will be returned in the hashmap)
     /// 
     /// That is, this function will never return an empty hashmap.
     /// 
-    /// Additionally, in a query string such as
+    /// So, in a query string such as
     /// 
     /// >
     /// > "/path/page?&jsdhfsdfkj&&JHKJH&&&Jjgdfhk&name=joe"
@@ -91,15 +89,13 @@ impl<'req> Request<'req> {
     /// 
     /// the invalid parts of the string will be ignored.
     /// 
-    fn parse_query_string(query_params: &str) -> Option<HashMap<&str, &str>> {
-        if query_params.is_empty() { return None;}
-
+    fn parse_query_string(query_params: &str) -> HashMap<&str, &str> {
         let query_map: HashMap<_, _> = query_params
             .split("&")
             .filter_map(|pair| pair.split_once("="))
             .collect();
 
-        Some(query_map) // todo could this accidentally be empty?
+        query_map
     }
 
     fn parse_http_ver(http_ver_str: &str) -> Result<u8, String> {
@@ -126,7 +122,7 @@ impl<'req> Request<'req> {
 
     // todo are headers always given as key:value? what about commas??
     // todo bug with spaces
-    fn parse_head(request_as_lines: &Vec<&'req str>) -> Option<HashMap<&'req str, &'req str>> {
+    fn parse_head(request_as_lines: &Vec<&'req str>) -> HashMap<&'req str, &'req str> {
         let mut lines_iter = request_as_lines.iter();
         lines_iter.next(); // ignore first item
 
@@ -135,12 +131,7 @@ impl<'req> Request<'req> {
             .filter_map(|line| line.split_once(":"))
             .collect();
 
-        if header_map.is_empty() {
-            None
-        }
-        else {
-            Some(header_map)
-        }
+        header_map
     }
 }
 
