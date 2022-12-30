@@ -105,6 +105,53 @@ fn parse_query_params_works(){
     assert_eq!(outputs, expected_outputs);
 }
 
+#[test]
+fn parse_query_params_returns_empty_map_on_invlaid_input(){
+    todo!()    
+}
+
+#[test]
+fn parse_query_params_ignores_invalid_input(){
+    todo!()
+}
+
+#[test]
+fn parse_query_params_ignores_duplicate_input(){
+    todo!()
+}
+
+#[test]
+fn parse_http_ver_works(){
+    todo!()
+}
+
+#[test]
+fn parse_http_ver_errors_as_expected(){
+    todo!()
+    // include all bad paths
+}
+
+#[test]
+fn parse_head_works(){
+    todo!()
+}
+
+#[test]
+fn parse_head_returns_empty_on_bad_input(){
+    todo!()
+}
+
+#[test]
+fn parse_head_ignores_bad_input(){
+    todo!()
+}
+
+#[test]
+fn parse_head_ignores_duplicate_input(){
+    todo!()
+}
+
+
 // next make tests for the 4 behaviors of 
 // parse_query_params
 
