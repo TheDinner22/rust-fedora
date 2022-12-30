@@ -175,7 +175,7 @@ impl<'req> TryFrom<&'req Vec<u8>> for Request<'req> {
         // todo why does this take the entire request if it only needs headers??
         let headers = Request::parse_head(&lines);
         
-        // parse body
+        // parse body (todo is there a better way to convert Option<&&str> to Option<&str>??)
         let body_str = *lines.last().unwrap_or(&"");
 
         let body;
