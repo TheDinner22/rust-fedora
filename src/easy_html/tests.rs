@@ -129,10 +129,35 @@ fn parse_query_params_returns_empty_map_on_invlaid_input(){
     }
 }
 
-// #[test]
-// fn parse_query_params_ignores_invalid_input(){
-//     todo!()
-// }
+#[test]
+fn parse_query_params_ignores_invalid_input(){
+    let inputs = [
+        "valid=part&invalid-part",
+        "invalid-part&valid=part",
+        "&invalid-part&valid=part",
+        "invalid-part&valid=part&",
+        "&invalid-part&valid=part&",
+        "&valid=part&simed123&other=valid&",
+        "infsdifns&valid=part&sfsdifosfjsdf",
+    ];
+
+    let expected_outputs = [
+        new_map(vec![("valid", "part")]),
+        new_map(vec![("valid", "part")]),
+        new_map(vec![("valid", "part")]),
+        new_map(vec![("valid", "part")]),
+        new_map(vec![("valid", "part")]),
+        new_map(vec![("valid", "part"), ("other", "valid")]),
+        new_map(vec![("valid", "part")]),
+    ];
+
+    let outputs: Vec<HashMap<_, _>> = inputs
+        .into_iter()
+        .map(|input| Request::parse_query_string(input))
+        .collect();
+
+    assert_eq!(outputs, expected_outputs);
+}
 
 // #[test]
 // fn parse_query_params_ignores_duplicate_input(){
