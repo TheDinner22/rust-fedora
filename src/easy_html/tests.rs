@@ -107,48 +107,67 @@ fn parse_query_params_works(){
 
 #[test]
 fn parse_query_params_returns_empty_map_on_invlaid_input(){
-    todo!()    
+    let inputs = [
+        "&&&&&&&&&&",
+        "some invalid as heck input",
+        "aadasda&asdhadkada&&&AD&&AD&A&DA&DA&",
+        "1234324234",
+        "123213213&ajashda",
+        "&&&&&-&",
+        "lfdkljsfskdf",
+        "sfdsfsfdsfsfdsfsfsdfdsffsdfdsfdsfsd",
+        "",
+    ];
+
+    let outputs: Vec<HashMap<_, _>> = inputs
+        .into_iter()
+        .map(|input| Request::parse_query_string(input))
+        .collect();
+
+    for output in outputs {
+        assert!(output.is_empty());
+    }
 }
 
-#[test]
-fn parse_query_params_ignores_invalid_input(){
-    todo!()
-}
+// #[test]
+// fn parse_query_params_ignores_invalid_input(){
+//     todo!()
+// }
 
-#[test]
-fn parse_query_params_ignores_duplicate_input(){
-    todo!()
-}
+// #[test]
+// fn parse_query_params_ignores_duplicate_input(){
+//     todo!()
+// }
 
-#[test]
-fn parse_http_ver_works(){
-    todo!()
-}
+// #[test]
+// fn parse_http_ver_works(){
+//     todo!()
+// }
 
-#[test]
-fn parse_http_ver_errors_as_expected(){
-    todo!()
-    // include all bad paths
-}
+// #[test]
+// fn parse_http_ver_errors_as_expected(){
+//     todo!()
+//     // include all bad paths
+// }
 
-#[test]
-fn parse_head_works(){
-    todo!()
-}
+// #[test]
+// fn parse_head_works(){
+//     todo!()
+// }
 
-#[test]
-fn parse_head_returns_empty_on_bad_input(){
-    todo!()
-}
+// #[test]
+// fn parse_head_returns_empty_on_bad_input(){
+//     todo!()
+// }
 
-#[test]
-fn parse_head_ignores_bad_input(){
-    todo!()
-}
+// #[test]
+// fn parse_head_ignores_bad_input(){
+//     todo!()
+// }
 
-#[test]
-fn parse_head_ignores_duplicate_input(){
-    todo!()
-}
+// #[test]
+// fn parse_head_ignores_duplicate_input(){
+//     todo!()
+// }
 
-// todo work on tests for other parsing functions
+// // todo work on tests for other parsing functions
