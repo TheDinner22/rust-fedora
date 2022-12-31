@@ -159,10 +159,24 @@ fn parse_query_params_ignores_invalid_input(){
     assert_eq!(outputs, expected_outputs);
 }
 
-// #[test]
-// fn parse_query_params_ignores_duplicate_input(){
-//     todo!()
-// }
+#[test]
+fn parse_query_params_ignores_duplicate_input(){
+    // this test assumes
+    // that the last duplicate given will be the value
+    // assigned to the hashmap
+
+    let inputs = [
+        "age=1&age=42",
+        "age=1&name=baz&age=42",
+        "name=baz&age=42&age=1",
+        "",
+        "",
+        "",
+        "",
+        "",
+    ];
+
+}
 
 // #[test]
 // fn parse_http_ver_works(){
