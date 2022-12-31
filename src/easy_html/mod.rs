@@ -84,7 +84,7 @@ impl<'req> Request<'req> {
     /// So, in a query string such as
     /// 
     /// >
-    /// > "/path/page?&jsdhfsdfkj&&JHKJH&&&Jjgdfhk&name=joe"
+    /// > "&jsdhfsdfkj&&JHKJH&&&Jjgdfhk&name=joe"
     /// >
     /// 
     /// the invalid parts of the string will be ignored.
