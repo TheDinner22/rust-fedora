@@ -151,8 +151,4 @@ fn parse_head_ignores_duplicate_input(){
     todo!()
 }
 
-
-// next make tests for the 4 behaviors of 
-// parse_query_params
-
 // todo work on tests for other parsing functions
