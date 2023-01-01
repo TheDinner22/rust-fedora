@@ -106,10 +106,8 @@ impl<'req> Request<'req> {
         }
 
         // get the last character from the http request string
-        let sub_ver_char = match http_ver_str.chars().last() {
-            Some(char) => char,
-            None => return Err(format!("invalid http version\nhttp version was empty")),
-        };
+        let msg = "if http_ver_str starts w EXPECT, it must have a last character";
+        let sub_ver_char = http_ver_str.chars().last().expect(msg);
 
         // try to parse the char into a u8
         let sub_version: u8 = match sub_ver_char.to_digit(10) {

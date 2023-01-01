@@ -221,11 +221,29 @@ fn parse_http_ver_works(){
     assert_eq!(outputs, expected_outputs);
 }
 
-// #[test]
-// fn parse_http_ver_errors_as_expected(){
-//     todo!()
-//     // include all bad paths
-// }
+#[test]
+fn parse_http_ver_errors_as_expected(){
+    // three error conditions
+    // 1. doesn't start w "HTTP/1."
+    // 2. the last character is not an integer
+
+    let inputs = [
+        "HTTP/1.",
+        "hTTP/1.",
+        "HTTP/2.",
+        "HTTP/2",
+        "HTTP/1.a",
+        "hTTP/1.a",
+        "HTTP/1. ",
+        "HTTP/.1",
+    ];
+
+    // the map will panic if an error is not returned
+    let _outputs: Vec<_> = inputs
+        .into_iter()
+        .map( |input| Request::parse_http_ver(input).unwrap_err() )
+        .collect(); // need this or the iterator isnt run
+}
 
 // #[test]
 // fn parse_head_works(){
