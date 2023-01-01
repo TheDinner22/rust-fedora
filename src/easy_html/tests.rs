@@ -164,18 +164,34 @@ fn parse_query_params_ignores_duplicate_input(){
     // this test assumes
     // that the last duplicate given will be the value
     // assigned to the hashmap
+    // (which depends on the .collect method)
 
     let inputs = [
         "age=1&age=42",
         "age=1&name=baz&age=42",
         "name=baz&age=42&age=1",
-        "",
-        "",
-        "",
-        "",
-        "",
+        "name=baz&age=1&name=foo&age=123",
+        "name=baz&age=1&name=foo&age=123",
+        "age=1&age=42&age=79",
+        "=2&=asd",
     ];
 
+    let expected_outputs = [
+        new_map(vec![("age", "42")]),
+        new_map(vec![("name", "baz"), ("age", "42")]),
+        new_map(vec![("name", "baz"), ("age", "1")]),
+        new_map(vec![("name", "foo"), ("age", "123")]),
+        new_map(vec![("name", "foo"), ("age", "123")]),
+        new_map(vec![("age", "79")]),
+        new_map(vec![("", "asd")]),
+    ];
+
+    let outputs: Vec<HashMap<_, _>> = inputs
+        .into_iter()
+        .map(|input| Request::parse_query_string(input))
+        .collect();
+
+    assert_eq!(outputs, expected_outputs);
 }
 
 // #[test]
