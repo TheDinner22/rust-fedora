@@ -194,10 +194,32 @@ fn parse_query_params_ignores_duplicate_input(){
     assert_eq!(outputs, expected_outputs);
 }
 
-// #[test]
-// fn parse_http_ver_works(){
-//     todo!()
-// }
+#[test]
+fn parse_http_ver_works(){
+    let inputs = [
+        "HTTP/1.1",
+        "HTTP/1.2",
+        "HTTP/1.3",
+        "HTTP/1.4",
+        "HTTP/1.5",
+        "HTTP/1.6",
+        "HTTP/1.7",
+        "HTTP/1.8",
+        "HTTP/1.9",
+        "HTTP/1.10", // note that this is not a current http version and so
+                     // 0 is returned instead of 10 (why would the function work with
+                     // invalid http versions?!)
+    ];
+
+    let expected_outputs: [u8; 10] = [ 1,2,3,4,5,6,7,8,9,0 ];
+
+    let outputs: Vec<u8> = inputs
+        .into_iter()
+        .map(|input| Request::parse_http_ver(input).unwrap() )
+        .collect();
+
+    assert_eq!(outputs, expected_outputs);
+}
 
 // #[test]
 // fn parse_http_ver_errors_as_expected(){
