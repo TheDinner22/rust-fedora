@@ -118,8 +118,7 @@ impl<'req> Request<'req> {
         Ok(sub_version)
     }
 
-    // todo are headers always given as key:value? what about commas??
-    // todo bug with spaces
+    // todo bug with being case-insensitive
     fn parse_head(request_as_lines: &Vec<&'req str>) -> HashMap<&'req str, &'req str> {
         let mut lines_iter = request_as_lines.iter();
         lines_iter.next(); // ignore first item
@@ -127,6 +126,7 @@ impl<'req> Request<'req> {
         let header_map: HashMap<_, _> = lines_iter
             .take_while(|line| !line.is_empty())
             .filter_map(|line| line.split_once(":"))
+            .map(|(key, val)| (key, val.trim_start()))
             .collect();
 
         header_map
