@@ -6,7 +6,7 @@ mod tcp_server {
     // use crate::easy_html;
 
     pub fn try_start(port: u16) -> std::io::Result<TcpListener>{
-        let socket_str = String::from("127.0.01:") + &port.to_string();
+        let socket_str = String::from("127.0.0.1:") + &port.to_string();
 
         TcpListener::bind(socket_str)
     }
