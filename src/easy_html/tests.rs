@@ -1,3 +1,5 @@
+// through learning and other stuff I realized a lot of these should be doc tests!
+
 use super::{Request, Method::{*, self}};
 use std::collections::HashMap;
 
@@ -245,24 +247,101 @@ fn parse_http_ver_errors_as_expected(){
         .collect(); // need this or the iterator isnt run
 }
 
-// #[test]
-// fn parse_head_works(){
-//     todo!()
-// }
+#[test]
+fn parse_head_works(){
+    // fails rn because I want 
+    // the parse header function to
+    // ignore case on keys, but it currently does not
 
-// #[test]
-// fn parse_head_returns_empty_on_bad_input(){
-//     todo!()
-// }
+    let input = &vec![
+        "some ignored first line",
+        "HeaDer1: somevaluehere",
+        "HeaDer2: somevaluehere",
+        "another header: 2134",
+        "values: 1, 2, 3, 4, 5, asd",
+        ": 2134",
+        "", // this line marks the end of incoming headers
+    ];
 
-// #[test]
-// fn parse_head_ignores_bad_input(){
-//     todo!()
-// }
+    let expected_output = new_map(vec![
+        ("header1", "somevaluehere"),
+        ("header2", "somevaluehere"),
+        ("another header", "2134"),
+        ("values", "1, 2, 3, 4, 5, asd"),
+        ("", "2134"),
+    ]);
 
-// #[test]
-// fn parse_head_ignores_duplicate_input(){
-//     todo!()
-// }
+    let output = Request::parse_head(input);
 
-// // todo work on tests for other parsing functions
+    assert_eq!(output, expected_output);
+}
+
+#[test]
+fn parse_head_returns_empty_on_all_bad_input(){
+    let input = &vec![
+        "some ignored first line",
+        "HeaDer1 somevaluehere",
+        "HeaDer2 somevaluehere",
+        "another header 2134",
+        "values 1, 2, 3, 4, 5, asd",
+        " 2134",
+        "", // this line marks the end of incoming headers
+    ];
+
+    let output = Request::parse_head(input);
+
+    assert!(output.is_empty());
+}
+
+#[test]
+fn parse_head_ignores_bad_input(){
+    let input = &vec![
+        "some ignored first line",
+        "header1: somevaluehere",
+        "header2 somevaluehere",
+        "another header: 2134",
+        "values 1, 2, 3, 4, 5, asd",
+        ": 2134",
+        "", // this line marks the end of incoming headers
+    ];
+
+    let expected_output = new_map(vec![
+        ("header1", "somevaluehere"),
+        // ("header2", "somevaluehere"),
+        ("another header", "2134"),
+        // ("values", "1, 2, 3, 4, 5, asd"),
+        ("", "2134"),
+    ]);
+
+    let output = Request::parse_head(input);
+
+    assert_eq!(output, expected_output);
+}
+
+#[test]
+fn parse_head_ignores_duplicate_input(){
+    let input = &vec![
+        "some ignored first line",
+        "header1: somevaluehere",
+        "header1: somevaluehere1",
+        "header2: somevaluehere",
+        "another header: 2134",
+        "values: 1, 2, 3, 4, 5, asd",
+        ": 2134",
+        ": 2135",
+        "header2: somevaluehere123",
+        "", // this line marks the end of incoming headers
+    ];
+
+    let expected_output = new_map(vec![
+        ("header1", "somevaluehere1"),
+        ("header2", "somevaluehere123"),
+        ("another header", "2134"),
+        ("values", "1, 2, 3, 4, 5, asd"),
+        ("", "2135"),
+    ]);
+
+    let output = Request::parse_head(input);
+
+    assert_eq!(output, expected_output);
+}
