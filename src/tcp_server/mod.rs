@@ -11,29 +11,31 @@ pub fn try_start(port: u16) -> std::io::Result<TcpListener> {
     TcpListener::bind(socket_str)
 }
 
-/// # read a TcpStream and return its contents as a Vec<String>
+/// # try and read an http request from a tcp stream
 ///
-/// This function uses a std::io::BufRead to read from a TcpStream.
+/// This function returns a result as the tcp stream could contain
+/// anything including an invalid http request
 ///
-/// ## what is different from std::io::BufRead.lines()?
+/// # panics
 ///
-/// There is some internal logic which stops reading from the stream
-/// once the http request has been fully recived.
+/// this function never panics
 ///
-/// In short, calling the `lines` method will continue reading until
-/// the connection closes (or its told to stop reading). This function
-/// handles telling the `lines` method to stop reading.
+/// # implementation
 ///
-/// ## panics
+/// this function reads all of the headers from the incoming http request
+/// and uses them to determine how it will handle the body
 ///
-/// This function should never panic
+/// The two headers that this function uses to determine how it will handle the body
+/// are the `Transfer-Encoding: Chunked` and the `Content-Length: {length}` headers.
 ///
 /// ## errors
 ///
-/// This function could return a std::io::Error.
-/// That means that the error occured when reading the contents of the stream.
+/// this function will error if
 ///
-///  Most likely, the TcpStream did not contain all valid utf8 strings
+/// -both `Transfer-Encoding: Chunked` and `Content-Length: {length}` are present in the header
+/// -`Transfer-Encoding` header is present with a value other than `Chunked`
+///
+/// - both
 pub fn try_dyn_read(mut stream: &TcpStream) -> io::Result<Vec<u8>> {
     const BUFFER_SIZE: usize = 1024;
 
