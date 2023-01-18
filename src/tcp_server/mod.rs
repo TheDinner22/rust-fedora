@@ -49,7 +49,7 @@ pub fn try_dyn_read(mut stream: &TcpStream) -> io::Result<Vec<u8>> {
             use std::str;
 
             str::from_utf8(bytes).map_err(|e| Error::new(Other, e.to_string()))
-        }?;
+        }?; // todo this ? could cause issues if this loop runs during transmition of a char
 
         let header_is_valid = inc_data_str.split_whitespace().any(|line| line == "");
 
