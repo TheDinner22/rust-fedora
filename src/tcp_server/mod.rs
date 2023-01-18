@@ -60,6 +60,9 @@ pub fn try_dyn_read(mut stream: &TcpStream) -> io::Result<Vec<u8>> {
 
     // then we get the body if any from headers and then we quesry the buffer one more time and
     // then we get the body and then bytes and then BOOM! idk abt chunk encoded tho
+    // do this is bad and we are going to end up wanting BufReader lines or something similar
+    // the function will end up in the easy html module
+    // tldr this function will disapear and be remade elsewhere
 
     todo!()
 }
