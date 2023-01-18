@@ -1,5 +1,5 @@
 use std::{
-    io::{self, Read, Write},
+    io::{self, BufReader, Read, Write},
     net::{TcpListener, TcpStream},
 };
 
@@ -37,21 +37,31 @@ pub fn try_start(port: u16) -> std::io::Result<TcpListener> {
 /// -`Transfer-Encoding` header is present with a value other than `Chunked`
 ///
 pub fn try_dyn_read(mut stream: &TcpStream) -> io::Result<Vec<u8>> {
-    const BUFFER_SIZE: usize = 1024;
+    let buf_reader = BufReader::new(&mut stream);
 
-    let mut bytes = Vec::new();
-    loop {
-        let mut buffer = [0; BUFFER_SIZE];
-        let bytes_read = stream.read(&mut buffer)?;
+    // loop until the whole header has been sent
+    let header_str = loop {
+        let bytes = buf_reader.buffer();
 
-        bytes.write_all(&buffer[0..bytes_read])?;
+        let inc_data_str = {
+            use io::Error;
+            use io::ErrorKind::Other;
+            use std::str;
 
-        if bytes_read == BUFFER_SIZE {
-            continue;
-        } else {
-            break Ok(bytes);
+            str::from_utf8(bytes).map_err(|e| Error::new(Other, e.to_string()))
+        }?;
+
+        let header_is_valid = inc_data_str.split_whitespace().any(|line| line == "");
+
+        if header_is_valid {
+            break inc_data_str;
         }
-    }
+    };
+
+    // then we get the body if any from headers and then we quesry the buffer one more time and
+    // then we get the body and then bytes and then BOOM! idk abt chunk encoded tho
+
+    todo!()
 }
 
 #[cfg(test)]
