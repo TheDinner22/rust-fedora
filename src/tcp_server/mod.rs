@@ -27,6 +27,7 @@ pub fn try_start(port: u16) -> std::io::Result<TcpListener> {
 ///
 /// The two headers that this function uses to determine how it will handle the body
 /// are the `Transfer-Encoding: Chunked` and the `Content-Length: {length}` headers.
+/// If neither header is present, it is assumed that there is no body.
 ///
 /// ## errors
 ///
@@ -35,7 +36,6 @@ pub fn try_start(port: u16) -> std::io::Result<TcpListener> {
 /// -both `Transfer-Encoding: Chunked` and `Content-Length: {length}` are present in the header
 /// -`Transfer-Encoding` header is present with a value other than `Chunked`
 ///
-/// - both
 pub fn try_dyn_read(mut stream: &TcpStream) -> io::Result<Vec<u8>> {
     const BUFFER_SIZE: usize = 1024;
 
