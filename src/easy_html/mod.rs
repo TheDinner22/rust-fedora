@@ -121,12 +121,10 @@ impl<'req> Request<'req> {
     }
 
     // todo bug with being case-insensitive
-    fn parse_head(request_as_lines: &Vec<&'req str>) -> HashMap<&'req str, &'req str> {
-        let mut lines_iter = request_as_lines.iter();
-        lines_iter.next(); // ignore first item
+    fn parse_head(headers_as_lines: &Vec<&'req str>) -> HashMap<&'req str, &'req str> {
+        let mut lines_iter = headers_as_lines.iter();
 
         let header_map: HashMap<_, _> = lines_iter
-            .take_while(|line| !line.is_empty())
             .filter_map(|line| line.split_once(":"))
             .map(|(key, val)| (key, val.trim_start()))
             .collect();
@@ -176,7 +174,12 @@ impl<'req> TryFrom<&'req Vec<u8>> for Request<'req> {
 
         // parse headers
         // todo why does this take the entire request if it only needs headers??
-        let headers = Request::parse_head(&lines);
+        let raw_headers = lines[1..]
+            .iter()
+            .map(|s| *s)
+            .take_while(|line| !line.is_empty())
+            .collect();
+        let headers = Request::parse_head(&raw_headers);
 
         // parse body (todo is there a better way to convert Option<&&str> to Option<&str>??)
         let body_str = *lines.last().unwrap_or(&"");
