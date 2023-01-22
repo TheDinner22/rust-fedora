@@ -24,7 +24,7 @@ impl Server {
     }
 
     fn handle_connection(&self, mut stream: TcpStream) -> io::Result<()> {
-        let http_request = tcp_server::try_dyn_read(&stream)?;
+        let http_request = tcp_server::try_dyn_read(&mut stream)?;
 
         let request = {
             use io::{Error, ErrorKind::Other};

@@ -41,12 +41,12 @@ pub fn try_start(port: u16) -> std::io::Result<TcpListener> {
 /// this function returns a RawHttp struct. This struct contains the raw, unparsed headers and the
 /// buf_reader which, assuming the request is valid, contains the body, if any.
 pub fn try_dyn_read(stream: &mut TcpStream) -> io::Result<RawHttp> {
-    let buf_reader = BufReader::new(stream);
+    let mut buf_reader = BufReader::new(stream);
 
     // todo make this shit readable with a scope 4 definition
     let headers = (&mut buf_reader)
         .lines()
-        .take_while(|line| !line.unwrap_or(String::new()).is_empty()) // error and empty string are both causes to stop so an error unwraps to ""
+        .take_while(|line| !line.as_ref().unwrap_or(&String::new()).is_empty()) // error and empty string are both causes to stop so an error unwraps to ""
         .collect::<io::Result<Vec<String>>>()?;
 
     Ok(RawHttp {
