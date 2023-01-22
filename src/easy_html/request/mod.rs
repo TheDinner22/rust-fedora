@@ -1,5 +1,6 @@
 use crate::easy_html::method::Method;
-use std::{collections::HashMap, io::Read, net::TcpStream};
+use crate::tcp_server::RawHttp;
+use std::collections::HashMap;
 
 #[derive(Debug)]
 pub struct Request<'req> {
@@ -91,6 +92,9 @@ impl<'req> Request<'req> {
     }
 }
 
+/// # parse http request from a str
+///
+/// usually we don't have a str (we have a tcp stream!) so this function is probably useless
 impl<'req> TryFrom<&'req str> for Request<'req> {
     type Error = String;
 
@@ -170,15 +174,10 @@ impl<'req> TryFrom<&'req Vec<u8>> for Request<'req> {
     }
 }
 
-impl<'req> TryFrom<&mut TcpStream> for Request<'req> {
+impl<'req, 'stream> TryFrom<&'req RawHttp<'stream>> for Request<'req> {
     type Error = String;
 
-    fn try_from(value: &mut TcpStream) -> Result<Self, Self::Error> {
-        let lines = {
-            use std::io::{BufRead, BufReader};
-            BufReader::new(value).lines()
-        };
-
+    fn try_from(value: &'req RawHttp) -> Result<Self, Self::Error> {
         todo!()
     }
 }
