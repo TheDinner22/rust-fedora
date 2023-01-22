@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 #[derive(Debug)]
 pub struct Request<'req> {
-    body: Option<&'req str>,
+    body: Option<&'req str>, // todo not all payloads are not valid utf8
     headers: HashMap<&'req str, &'req str>,
     query_string_object: HashMap<&'req str, &'req str>,
     path: &'req str, // todo is it type String???
