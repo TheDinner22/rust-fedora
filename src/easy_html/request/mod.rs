@@ -80,7 +80,7 @@ impl<'req> Request<'req> {
 
     // todo bug with being case-insensitive
     fn parse_head(headers_as_lines: &Vec<&'req str>) -> HashMap<&'req str, &'req str> {
-        let mut lines_iter = headers_as_lines.iter();
+        let lines_iter = headers_as_lines.iter();
 
         let header_map: HashMap<_, _> = lines_iter
             .filter_map(|line| line.split_once(":"))
@@ -131,7 +131,6 @@ impl<'req> TryFrom<&'req Vec<u8>> for Request<'req> {
         let http_sub_ver = Request::parse_http_ver(first_line_words[2])?;
 
         // parse headers
-        // todo why does this take the entire request if it only needs headers??
         let raw_headers = lines[1..]
             .iter()
             .map(|s| *s)
