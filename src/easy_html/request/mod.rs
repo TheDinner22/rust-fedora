@@ -179,6 +179,8 @@ impl<'req, 'stream> TryFrom<&'req RawHttp<'stream>> for Request<'req> {
 
     fn try_from(value: &'req RawHttp) -> Result<Self, Self::Error> {
         todo!()
+        // rn we thinking about impl this function, tests for the functions you use to do that or
+        // tests in general, and making the methods on Request generic
     }
 }
 
