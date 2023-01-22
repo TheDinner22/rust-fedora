@@ -95,23 +95,7 @@ impl<'req> TryFrom<&'req str> for Request<'req> {
     type Error = String;
 
     fn try_from(value: &'req str) -> Result<Self, Self::Error> {
-        todo!()
-    }
-}
-
-/// # from a &vec of u8
-///
-/// we Reqest will live as long as the vector does
-impl<'req> TryFrom<&'req Vec<u8>> for Request<'req> {
-    type Error = String;
-
-    fn try_from(value: &'req Vec<u8>) -> Result<Self, Self::Error> {
-        let http_string = match std::str::from_utf8(value) {
-            Ok(request) => request,
-            Err(e) => return Err(e.to_string()),
-        };
-
-        let lines: Vec<&str> = http_string.split("\r\n").collect();
+        let lines: Vec<&str> = value.split("\r\n").collect();
         let first_line = *lines.first().unwrap_or(&"");
 
         // if the first line is empty, the request is bad! (todo refactor me!!)
@@ -167,5 +151,21 @@ impl<'req> TryFrom<&'req Vec<u8>> for Request<'req> {
             method,
             http_ver: http_sub_ver,
         })
+    }
+}
+
+/// # from a &vec of u8
+///
+/// we Reqest will live as long as the vector does
+impl<'req> TryFrom<&'req Vec<u8>> for Request<'req> {
+    type Error = String;
+
+    fn try_from(value: &'req Vec<u8>) -> Result<Self, Self::Error> {
+        let http_string = match std::str::from_utf8(value) {
+            Ok(request) => request,
+            Err(e) => return Err(e.to_string()),
+        };
+
+        Request::try_from(http_string)
     }
 }
