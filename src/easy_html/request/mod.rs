@@ -89,8 +89,15 @@ impl<'req> Request<'req> {
 
         header_map
     }
+
+    fn create_from_str(http_str: &str) -> Self {
+        todo!()
+    }
 }
 
+/// # from a &vec of u8
+///
+/// we Reqest will live as long as the vector does
 impl<'req> TryFrom<&'req Vec<u8>> for Request<'req> {
     type Error = String;
 
