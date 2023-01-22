@@ -1,5 +1,5 @@
 use std::{
-    io::{self, BufReader},
+    io::{self, BufRead, BufReader},
     net::{TcpListener, TcpStream},
 };
 
@@ -23,48 +23,41 @@ pub fn try_start(port: u16) -> std::io::Result<TcpListener> {
 /// # implementation
 ///
 /// this function reads all of the headers from the incoming http request
-/// and uses them to determine how it will handle the body
+/// the rest of the request is ignored. That is, this functions *gets* the headers
+/// but does not parse, interpret, or validate the headers.
 ///
-/// The two headers that this function uses to determine how it will handle the body
-/// are the `Transfer-Encoding: Chunked` and the `Content-Length: {length}` headers.
-/// If neither header is present, it is assumed that there is no body.
+/// Neither does this function even attempt to read the body -that would require parsing the
+/// content length or Transfer-Encoding!
 ///
 /// ## errors
 ///
 /// this function will error if
 ///
-/// -both `Transfer-Encoding: Chunked` and `Content-Length: {length}` are present in the header
-/// -`Transfer-Encoding` header is present with a value other than `Chunked`
+/// -there is an error reading the headers to utf8 string (if this happens, it is most likely that
+/// there were invalid bytes in the request)
 ///
-pub fn try_dyn_read(mut stream: &TcpStream) -> io::Result<Vec<u8>> {
-    let buf_reader = BufReader::new(&mut stream);
+/// # returns
+///
+/// this function returns a RawHttp struct. This struct contains the raw, unparsed headers and the
+/// buf_reader which, assuming the request is valid, contains the body, if any.
+pub fn try_dyn_read(stream: &mut TcpStream) -> io::Result<RawHttp> {
+    let buf_reader = BufReader::new(stream);
 
-    // loop until the whole header has been sent
-    let header_str = loop {
-        let bytes = buf_reader.buffer();
+    // todo make this shit readable with a scope 4 definition
+    let headers = (&mut buf_reader)
+        .lines()
+        .take_while(|line| !line.unwrap_or(String::new()).is_empty()) // error and empty string are both causes to stop so an error unwraps to ""
+        .collect::<io::Result<Vec<String>>>()?;
 
-        let inc_data_str = {
-            use io::Error;
-            use io::ErrorKind::Other;
-            use std::str;
+    Ok(RawHttp {
+        raw_headers: headers,
+        body_reader: buf_reader,
+    })
+}
 
-            str::from_utf8(bytes).map_err(|e| Error::new(Other, e.to_string()))
-        }?; // todo this ? could cause issues if this loop runs during transmition of a char
-
-        let header_is_valid = inc_data_str.split_whitespace().any(|line| line == "");
-
-        if header_is_valid {
-            break inc_data_str;
-        }
-    };
-
-    // then we get the body if any from headers and then we quesry the buffer one more time and
-    // then we get the body and then bytes and then BOOM! idk abt chunk encoded tho
-    // do this is bad and we are going to end up wanting BufReader lines or something similar
-    // the function will end up in the easy html module
-    // tldr this function will disapear and be remade elsewhere
-
-    todo!()
+pub struct RawHttp<'stream> {
+    raw_headers: Vec<String>,
+    body_reader: BufReader<&'stream mut TcpStream>,
 }
 
 #[cfg(test)]
