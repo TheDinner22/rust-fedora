@@ -1,9 +1,7 @@
 // through learning and other stuff I realized a lot of these should be doc tests!
 
-use super::{
-    method::Method::{self, *},
-    request::Request,
-};
+use crate::easy_html::method::Method::{self, *};
+use crate::easy_html::request::Request;
 use std::collections::HashMap;
 
 // helper function to construct hashmaps from keys

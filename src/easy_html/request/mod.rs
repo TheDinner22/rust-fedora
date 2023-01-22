@@ -169,3 +169,6 @@ impl<'req> TryFrom<&'req Vec<u8>> for Request<'req> {
         Request::try_from(http_string)
     }
 }
+
+#[cfg(test)]
+mod tests;
