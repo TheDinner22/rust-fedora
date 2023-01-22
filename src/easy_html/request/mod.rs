@@ -89,8 +89,12 @@ impl<'req> Request<'req> {
 
         header_map
     }
+}
 
-    fn create_from_str(http_str: &str) -> Self {
+impl<'req> TryFrom<&'req str> for Request<'req> {
+    type Error = String;
+
+    fn try_from(value: &'req str) -> Result<Self, Self::Error> {
         todo!()
     }
 }
