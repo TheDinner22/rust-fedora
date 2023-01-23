@@ -13,7 +13,10 @@ pub struct Request<'req> {
 }
 
 impl<'req> Request<'req> {
-    fn parse_method(method_str: &str) -> Result<Method, String> {
+    fn parse_method<T>(method_str: T) -> Result<Method, String>
+    where
+        T: ToString,
+    {
         Method::try_from(method_str)
     }
 
@@ -92,12 +95,26 @@ impl<'req> Request<'req> {
     }
 }
 
+/// # parse http request from a String or str
+///
+/// the String or &str is split on newline characters
+/// and collected into a vector
+///
+impl<'req> TryFrom<Vec<&'req str>> for Request<'req> {
+    type Error = String;
+
+    fn try_from(value: Vec<&'req str>) -> Result<Self, Self::Error> {
+        todo!()
+    }
+}
+
 /// # parse http request from a str
 ///
 /// usually we don't have a str (we have a tcp stream!) so this function is probably useless
 impl<'req> TryFrom<&'req str> for Request<'req> {
     type Error = String;
 
+    // todo this function actually sees a lot of use in the module so please optimize it!
     fn try_from(value: &'req str) -> Result<Self, Self::Error> {
         let lines: Vec<&str> = value.split("\r\n").collect();
         let first_line = *lines.first().unwrap_or(&"");
@@ -178,6 +195,9 @@ impl<'req, 'stream> TryFrom<&'req RawHttp<'stream>> for Request<'req> {
     type Error = String;
 
     fn try_from(value: &'req RawHttp) -> Result<Self, Self::Error> {
+        // convert the first line and headers into a &str
+        let owned_lines = value.raw_headers();
+
         todo!()
         // rn we thinking about impl this function, tests for the functions you use to do that or
         // tests in general, and making the methods on Request generic
