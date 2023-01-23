@@ -64,10 +64,6 @@ impl<'stream> RawHttp<'stream> {
     pub fn raw_headers(&self) -> &Vec<String> {
         &self.raw_headers
     }
-
-    pub fn body_reader(&self) -> BufReader<&'stream mut TcpStream> {
-        self.body_reader
-    }
 }
 
 #[cfg(test)]
