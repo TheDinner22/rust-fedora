@@ -206,7 +206,7 @@ impl<'req, 'stream> TryFrom<&'req RawHttp<'stream>> for Request<'req> {
 
         {
             // todo del me this is 4 testing
-            assert!(request_without_body.body.is_none());
+            // assert!(request_without_body.body.is_none());
             Ok(request_without_body)
         }
 
