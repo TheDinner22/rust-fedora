@@ -60,5 +60,15 @@ pub struct RawHttp<'stream> {
     body_reader: BufReader<&'stream mut TcpStream>,
 }
 
+impl<'stream> RawHttp<'stream> {
+    fn raw_headers(&self) -> &Vec<String> {
+        &self.raw_headers
+    }
+
+    fn body_reader(&self) -> BufReader<&'stream mut TcpStream> {
+        self.body_reader
+    }
+}
+
 #[cfg(test)]
 mod tests;
