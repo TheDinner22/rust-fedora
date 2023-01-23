@@ -61,11 +61,11 @@ pub struct RawHttp<'stream> {
 }
 
 impl<'stream> RawHttp<'stream> {
-    fn raw_headers(&self) -> &Vec<String> {
+    pub fn raw_headers(&self) -> &Vec<String> {
         &self.raw_headers
     }
 
-    fn body_reader(&self) -> BufReader<&'stream mut TcpStream> {
+    pub fn body_reader(&self) -> BufReader<&'stream mut TcpStream> {
         self.body_reader
     }
 }
