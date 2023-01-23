@@ -104,19 +104,8 @@ impl<'req> TryFrom<Vec<&'req str>> for Request<'req> {
     type Error = String;
 
     fn try_from(value: Vec<&'req str>) -> Result<Self, Self::Error> {
-        todo!()
-    }
-}
+        let lines = value; // rename bcuz trait
 
-/// # parse http request from a str
-///
-/// usually we don't have a str (we have a tcp stream!) so this function is probably useless
-impl<'req> TryFrom<&'req str> for Request<'req> {
-    type Error = String;
-
-    // todo this function actually sees a lot of use in the module so please optimize it!
-    fn try_from(value: &'req str) -> Result<Self, Self::Error> {
-        let lines: Vec<&str> = value.split("\r\n").collect();
         let first_line = *lines.first().unwrap_or(&"");
 
         // if the first line is empty, the request is bad! (todo refactor me!!)
@@ -175,6 +164,20 @@ impl<'req> TryFrom<&'req str> for Request<'req> {
     }
 }
 
+/// # parse http request from a str
+///
+/// usually we don't have a str (we have a tcp stream!) so this function is probably useless
+impl<'req> TryFrom<&'req str> for Request<'req> {
+    type Error = String;
+
+    // todo this function actually sees a lot of use in the module so please optimize it!
+    fn try_from(value: &'req str) -> Result<Self, Self::Error> {
+        let lines: Vec<&str> = value.split("\r\n").collect();
+
+        Request::try_from(lines)
+    }
+}
+
 /// # from a &vec of u8
 ///
 /// we Reqest will live as long as the vector does
@@ -197,8 +200,16 @@ impl<'req, 'stream> TryFrom<&'req RawHttp<'stream>> for Request<'req> {
     fn try_from(value: &'req RawHttp) -> Result<Self, Self::Error> {
         // convert the first line and headers into a &str
         let owned_lines = value.raw_headers();
+        let lines: Vec<&str> = owned_lines.iter().map(|line| &**line).collect(); // see https://stackoverflow.com/questions/33216514/how-do-i-convert-a-vecstring-to-vecstr
 
-        todo!()
+        let request_without_body = Request::try_from(lines)?;
+
+        {
+            // todo del me this is 4 testing
+            assert!(request_without_body.body.is_none());
+            Ok(request_without_body)
+        }
+
         // rn we thinking about impl this function, tests for the functions you use to do that or
         // tests in general, and making the methods on Request generic
     }
