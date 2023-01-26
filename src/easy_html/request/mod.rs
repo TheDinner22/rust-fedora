@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 #[derive(Debug)]
 pub struct Request<'req> {
-    body: Option<&'req str>, // todo not all payloads are not valid utf8
+    body: Option<&'req [u8]>, // todo not all payloads are not valid utf8
     headers: HashMap<&'req str, &'req str>,
     query_string_object: HashMap<&'req str, &'req str>,
     path: &'req str, // todo is it type String???
@@ -95,10 +95,14 @@ impl<'req> Request<'req> {
     }
 }
 
-/// # parse http request from a String or str
+/// # parse an http request headers from vec of str
 ///
-/// the String or &str is split on newline characters
+/// the &str is split on newline characters
 /// and collected into a vector
+///
+/// todo docs for this
+///
+/// the body is ignored if any
 ///
 impl<'req> TryFrom<Vec<&'req str>> for Request<'req> {
     type Error = String;
@@ -144,18 +148,8 @@ impl<'req> TryFrom<Vec<&'req str>> for Request<'req> {
             .collect();
         let headers = Request::parse_head(&raw_headers);
 
-        // parse body (todo is there a better way to convert Option<&&str> to Option<&str>??)
-        let body_str = *lines.last().unwrap_or(&"");
-
-        let body;
-        if body_str.is_empty() {
-            body = None;
-        } else {
-            body = Some(body_str);
-        }
-
         Ok(Request {
-            body,
+            body: None,
             headers,
             query_string_object: query_params,
             path: raw_path,
@@ -204,14 +198,15 @@ impl<'req, 'stream> TryFrom<&'req RawHttp<'stream>> for Request<'req> {
 
         let request_without_body = Request::try_from(lines)?;
 
-        {
-            // todo del me this is 4 testing
-            // assert!(request_without_body.body.is_none());
-            Ok(request_without_body)
-        }
+        // now we parse the headers to determine if there is a body and how to parse it
+        let headers = &request_without_body.headers;
 
-        // rn we thinking about impl this function, tests for the functions you use to do that or
-        // tests in general, and making the methods on Request generic
+        // check for the Content-Length and Transfer-Encoding: chunked
+        // if neither are present there is no body
+        // if both are present the request is invalid
+        // if Transfer-Encoding is not Chunked the request is invalid (unimplemented)
+        let content_length = headers.get("Content-Length");
+        let transfer_encoding = headers.get("Transfer-Encoding");
     }
 }
 
