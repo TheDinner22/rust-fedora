@@ -103,6 +103,7 @@ impl<'req> Request<'req> {
 impl<'req> TryFrom<Vec<&'req str>> for Request<'req> {
     type Error = String;
 
+    // todo this function actually sees a lot of use in the module so please optimize it!
     fn try_from(value: Vec<&'req str>) -> Result<Self, Self::Error> {
         let lines = value; // rename bcuz trait
 
@@ -170,7 +171,6 @@ impl<'req> TryFrom<Vec<&'req str>> for Request<'req> {
 impl<'req> TryFrom<&'req str> for Request<'req> {
     type Error = String;
 
-    // todo this function actually sees a lot of use in the module so please optimize it!
     fn try_from(value: &'req str) -> Result<Self, Self::Error> {
         let lines: Vec<&str> = value.split("\r\n").collect();
 
@@ -180,7 +180,7 @@ impl<'req> TryFrom<&'req str> for Request<'req> {
 
 /// # from a &vec of u8
 ///
-/// we Reqest will live as long as the vector does
+/// the Reqest will live as long as the vector does
 impl<'req> TryFrom<&'req Vec<u8>> for Request<'req> {
     type Error = String;
 
