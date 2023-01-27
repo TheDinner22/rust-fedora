@@ -201,10 +201,15 @@ impl<'req, 'stream> TryFrom<&'req RawHttp<'stream>> for Request<'req> {
         // now we parse the headers to determine if there is a body and how to parse it
         let headers = &request_without_body.headers;
 
-        // check for the Content-Length and Transfer-Encoding: chunked
-        // if neither are present there is no body
-        // if both are present the request is invalid
-        // if Transfer-Encoding is not Chunked the request is invalid (unimplemented)
+        // see the link for how this server determines how to handle the body
+        // https://greenbytes.de/tech/webdav/rfc7230.html#message.body.length
+        // tldr:
+        // if the transfer_encoding is chunked we use that
+        // if transfer_encoding is not chunked the request is invalid
+        // if there is transfer_encoding and content length then its invalid (no request smuggling!)
+        // multiple content lengths or a content_length with an ivalid value means an error
+        // if theres no transfer_encoding but there is a content length we use that
+        // otherwise, the request has no body
         let content_length = headers.get("Content-Length");
         let transfer_encoding = headers.get("Transfer-Encoding");
     }
