@@ -212,6 +212,33 @@ impl<'req, 'stream> TryFrom<&'req RawHttp<'stream>> for Request<'req> {
         // otherwise, the request has no body
         let content_length = headers.get("Content-Length");
         let transfer_encoding = headers.get("Transfer-Encoding");
+
+        let body;
+
+        if content_length.is_none() && transfer_encoding.is_none() {
+            body = None;
+        }
+
+        else if content_length.is_some() && transfer_encoding.is_some() {
+            return Err(String::from("bad request: transfer encoding and content length provided"));
+        }
+        
+        else if let Some(encoding) == transfer_encoding {
+            // here we know that there is no content length
+            if encoding != "Chunked" {
+                return Err(String::from("bad request: transfer encoding was not Chunked"));
+            }
+
+            // cannot yet handle this kind of request
+            todo!()
+        }
+
+        else if let Some(raw_length) = content_length {
+            // parse the length 
+            todo!()
+        }
+
+
     }
 }
 
