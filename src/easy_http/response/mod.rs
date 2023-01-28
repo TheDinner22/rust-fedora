@@ -9,6 +9,46 @@ pub struct Response {
 }
 
 impl Response {
+    pub fn new(status_code: u16, headers: HashMap<String, String>, body: Vec<u8>) -> Self {
+        Response {
+            status_code,
+            headers,
+            body,
+        }
+    }
+
+    pub fn get_header(&self, header: &str) -> Option<&str> {
+        todo!()
+    }
+
+    pub fn get_mut_header(&mut self, header: &str) -> Option<&mut str> {
+        todo!()
+    }
+
+    pub fn set_header(&mut self, key: &str, value: &str) {
+        todo!()
+    }
+
+    pub fn try_delete_header(&mut self, header: &str) -> Result<(), String> {
+        todo!()
+    }
+
+    pub fn status_code(&self) -> u16 {
+        self.status_code
+    }
+
+    pub fn set_status_code(&mut self) -> Result<(), String> {
+        todo!()
+    }
+
+    pub fn get_body(&self) -> &Vec<u8> {
+        &self.body
+    }
+
+    pub fn get_mut_body(&mut self) -> &mut Vec<u8> {
+        todo!()
+    }
+
     fn reason_phrase(status_code: u16) -> String {
         match status_code {
             200 => "OK".into(),
