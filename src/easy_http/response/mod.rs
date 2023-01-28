@@ -21,22 +21,22 @@ impl Response {
         }
     }
 
-    // # convert self into an http request
-    //
-    // this function consumes the respose and creates a Vec<u8>
-    // representing an http request as bytes.
-    //
-    // You might use this function to convert the http response to bytes so that you can send it
-    // through a TcpStream
-    //
-    // # checks
-    //
-    // this function makes no checks to see if self contains data that can be parsed into
-    // a valid http request. It is very possible that an instance of Response containing invalid
-    // data to create an invalid http response.
-    //
-    // Examples of invalid data include inncorrectly formatted headers or a status code greater
-    // than 599
+    /// # convert self into an http request
+    ///
+    /// this function consumes the respose and creates a Vec<u8>
+    /// representing an http request as bytes.
+    ///
+    /// You might use this function to convert the http response to bytes so that you can send it
+    /// through a TcpStream
+    ///
+    /// # checks
+    ///
+    /// this function makes no checks to see if self contains data that can be parsed into
+    /// a valid http request. It is very possible that an instance of Response containing invalid
+    /// data to create an invalid http response.
+    ///
+    /// Examples of invalid data include inncorrectly formatted headers or a status code greater
+    /// than 599
     fn into_bytes(self) -> Vec<u8> {
         // things to construct a status line
         const HTTP_VER: &str = "HTTP/1.1 200 OK";
@@ -65,26 +65,26 @@ impl Response {
         request_as_bytes
     }
 
-    // # send this request down a TcpStream
-    //
-    // this fucntion converts the Response to bytes
-    // and the calls stream.write_all(bytes)
-    //
-    // # blocking
-    //
-    // that is, this stream will block until all of the data has been sent or
-    // until there is an error
-    //
-    // # errors
-    //
-    // this function will only error if there is an issue writing to the stream. It forwards the
-    // io::Result returned by the stream.write_all method.
-    //
-    // # checks
-    //
-    // this function does not check anything about the request! That means passing an unchecked
-    // Response to this function could lead to an invalid http response being sent. (for example,
-    // the Content-Length header may be unset or inaccurate)
+    /// # send this request down a TcpStream
+    ///
+    /// this fucntion converts the Response to bytes
+    /// and the calls stream.write_all(bytes)
+    ///
+    /// # blocking
+    ///
+    /// that is, this stream will block until all of the data has been sent or
+    /// until there is an error
+    ///
+    /// # errors
+    ///
+    /// this function will only error if there is an issue writing to the stream. It forwards the
+    /// io::Result returned by the stream.write_all method.
+    ///
+    /// # checks
+    ///
+    /// this function does not check anything about the request! That means passing an unchecked
+    /// Response to this function could lead to an invalid http response being sent. (for example,
+    /// the Content-Length header may be unset or inaccurate)
     pub fn send_down_stream(self, mut stream: TcpStream) -> std::io::Result<()> {
         // first convert the Response to bytes
         let bytes = self.into_bytes();
