@@ -143,3 +143,6 @@ impl From<u16> for Response {
         }
     }
 }
+
+#[cfg(test)]
+mod tests;
