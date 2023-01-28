@@ -2,7 +2,6 @@ use std::{collections::HashMap, io::Write, net::TcpStream};
 
 pub struct Response {
     status_code: u16,
-    reason_phrase: String,
 
     headers: HashMap<String, String>,
     body: Vec<u8>,
