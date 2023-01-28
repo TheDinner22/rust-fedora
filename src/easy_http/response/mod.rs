@@ -22,23 +22,56 @@ impl Response {
         }
     }
 
-    fn into_bytes(self) {
+    // # convert self into an http request
+    //
+    // this function consumes the respose and creates a Vec<u8>
+    // representing an http request as bytes.
+    //
+    // You might use this function to convert the http response to bytes so that you can send it
+    // through a TcpStream
+    //
+    // # checks
+    //
+    // this function makes no checks to see if self contains data that can be parsed into
+    // a valid http request. It is very possible that an instance of Response containing invalid
+    // data to create an invalid http response.
+    //
+    // Examples of invalid data include inncorrectly formatted headers or a status code greater
+    // than 599
+    fn into_bytes(self) -> Vec<u8> {
         // things to construct a status line
         const HTTP_VER: &str = "HTTP/1.1 200 OK";
         let reason_phrase = Response::reason_phrase(self.status_code);
-        let status_line = format!("{} {} {}", HTTP_VER, self.status_code, reason_phrase);
 
-        let headers_string = self.headers
+        let status_line = format!("{} {} {}\r\n", HTTP_VER, self.status_code, reason_phrase);
+
+        let headers_string = self
+            .headers
             .into_iter()
-            .map(|(key, value)| )
+            .fold(String::new(), |accum, (key, value)| {
+                accum + &key + ": " + &value + "\r\n"
+            });
+
+        // now convert the status_line, headers, and body into iterators over bytes
+        // then chain them together to get the byte-version of the request
+        let request_as_bytes: Vec<u8> = {
+            status_line
+                .bytes() // the reason_phrase
+                .chain(headers_string.bytes()) // plus the headers
+                .chain("\r\n".bytes()) // CRLF to indicate end of headers
+                .chain(self.body.into_iter()) // plus the body
+                .collect()
+        };
+
+        request_as_bytes
     }
 
-    fn send_down_stream(self, mut stream: TcpStream) -> std::io::Result<()> {
+    pub fn send_down_stream(self, mut stream: TcpStream) -> std::io::Result<()> {
         // first convert the Response to bytes
         let bytes = self.into_bytes();
 
         // write those bytes to the stream
-        stream.write_all(bytes)
+        stream.write_all(&bytes)
     }
 }
 
@@ -46,8 +79,9 @@ impl From<u16> for Response {
     fn from(status_code: u16) -> Self {
         Response {
             status_code,
-            headers: "".to_string(),
-            body: "".to_string(),
+            reason_phrase: Response::reason_phrase(status_code),
+            headers: HashMap::new(),
+            body: Vec::new(),
         }
     }
 }
