@@ -65,6 +65,27 @@ impl Response {
         request_as_bytes
     }
 
+    // # send this request down a TcpStream
+    //
+    // this fucntion converts the Response to bytes
+    // and the calls stream.write_all(bytes)
+    //
+    // # blocking
+    //
+    // that is, this stream will block until all of the data has been sent or
+    // until there is an error
+    //
+    // # errors
+    //
+    // this function will only error if there is an issue writing to the stream. It forwards the
+    // io::Result returned by the stream.write_all method.
+    //
+    // # checks
+    //
+    // this function does not check anything about the request! That means passing an unchecked
+    // Response to this function could lead to an invalid http response being sent. (for example,
+    // the Content-Length header may be unset or inaccurate)
+    //
     pub fn send_down_stream(self, mut stream: TcpStream) -> std::io::Result<()> {
         // first convert the Response to bytes
         let bytes = self.into_bytes();
