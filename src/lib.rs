@@ -1,4 +1,4 @@
-mod easy_html;
+mod easy_http;
 
 mod tcp_server;
 

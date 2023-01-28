@@ -1,4 +1,4 @@
-use crate::easy_html::method::Method;
+use crate::easy_http::method::Method;
 use crate::tcp_server::RawHttp;
 use std::collections::HashMap;
 

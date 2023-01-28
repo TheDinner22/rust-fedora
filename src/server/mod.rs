@@ -1,7 +1,7 @@
 use std::io::{self, Write};
 use std::net::{TcpListener, TcpStream};
 
-use super::easy_html::{request::Request, response::Response};
+use super::easy_http::{request::Request, response::Response};
 use super::tcp_server;
 
 pub struct Server {
