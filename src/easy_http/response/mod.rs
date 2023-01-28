@@ -85,7 +85,6 @@ impl Response {
     // this function does not check anything about the request! That means passing an unchecked
     // Response to this function could lead to an invalid http response being sent. (for example,
     // the Content-Length header may be unset or inaccurate)
-    //
     pub fn send_down_stream(self, mut stream: TcpStream) -> std::io::Result<()> {
         // first convert the Response to bytes
         let bytes = self.into_bytes();
@@ -99,7 +98,6 @@ impl From<u16> for Response {
     fn from(status_code: u16) -> Self {
         Response {
             status_code,
-            reason_phrase: Response::reason_phrase(status_code),
             headers: HashMap::new(),
             body: Vec::new(),
         }
