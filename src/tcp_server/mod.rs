@@ -41,6 +41,12 @@ pub fn try_start(port: u16) -> std::io::Result<TcpListener> {
 ///
 /// this function returns a RawHttp struct. This struct contains the raw, unparsed headers and the
 /// buf_reader which, assuming the request is valid, contains the body, if any.
+///
+/// # blocking
+///
+/// if a tcp request is sent such that it does parse nicely into a Vec<String> (newline seperated), but none of those
+/// strings are empty, this function will block for 5-10 minutes or until the tcp connection is
+/// closed.
 pub fn try_dyn_read(stream: &mut TcpStream) -> io::Result<RawHttp> {
     let mut buf_reader = BufReader::new(stream);
 
@@ -112,6 +118,7 @@ impl<'stream> RawHttp<'stream> {
             ));
         }
 
+        // todo this might end up half reading a body if the request is closed prematurely!
         body_reader.unwrap().bytes().take(length).collect()
     }
 }
