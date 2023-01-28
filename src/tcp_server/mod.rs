@@ -84,26 +84,36 @@ impl<'stream> RawHttp<'stream> {
     ///
     /// # panic
     ///
-    /// i need to test more to determine when, if at all, this function will panic.
-    /// it calls `let body_reader = self.body_reader.borrow_mut().take();`
-    /// and uses that mutable borrow throughout the function.
+    /// When used without access to the private fields of this struct, this function should never
+    /// panic!
     ///
-    /// I figure this is safe as self.body_reader is not borrowed anywhere else and the borrow is
-    /// dropped immediately!
+    /// This function calls `let body_reader = self.body_reader.borrow_mut().take();`
+    /// as you can see, the mutable borrow is consumed in the same line it is created.
     ///
-    /// There might be issues calling this function if you already have a &mut self but idk.
+    /// That is, when accessed from outside its module, the only way to access the RefCell is through this this method which *only borrows
+    /// the inner option as mutable once*. Thus, creating multiple mutable references at the same
+    /// time is impossible.
+    ///
+    /// To anyone who is writing code which CAN access the private fields in this struct (maybe
+    /// future me who is writing a unit test) ***DO NOT ACCESS THE FIELDS***! Borrowing or mutably
+    /// borrowing from the RefCell and then calling this function will causes a runtime panic.
+    ///
+    /// # TLDR
+    ///
+    /// only use the getter methods defined on this struct: they are safe. Never access the struct
+    /// fields directly
     pub fn take_body_stream(&self, length: usize) -> std::io::Result<Vec<u8>> {
         let body_reader = self.body_reader.borrow_mut().take();
 
         if body_reader.is_none() {
-            io::Error::new(
+            return Err(io::Error::new(
                 io::ErrorKind::Other,
                 "error: already consumed the requests body",
-            );
+            ));
         }
 
         body_reader.unwrap().bytes().take(length).collect()
-    } // todo test this function
+    }
 }
 
 #[cfg(test)]
