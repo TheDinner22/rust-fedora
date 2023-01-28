@@ -1,5 +1,6 @@
 use std::{
-    io::{self, BufRead, BufReader},
+    cell::RefCell,
+    io::{self, BufRead, BufReader, Read},
     net::{TcpListener, TcpStream},
 };
 
@@ -51,19 +52,58 @@ pub fn try_dyn_read(stream: &mut TcpStream) -> io::Result<RawHttp> {
 
     Ok(RawHttp {
         raw_headers: headers,
-        body_reader: buf_reader,
+        body_reader: RefCell::new(Some(buf_reader)),
     })
 }
 
 pub struct RawHttp<'stream> {
     raw_headers: Vec<String>,
-    body_reader: BufReader<&'stream mut TcpStream>,
+    body_reader: RefCell<Option<BufReader<&'stream mut TcpStream>>>,
 }
 
 impl<'stream> RawHttp<'stream> {
     pub fn raw_headers(&self) -> &Vec<String> {
         &self.raw_headers
     }
+
+    /// # take from a buf reader
+    ///
+    /// This function reads from a tcp stream wrapped in a buf_reader.
+    /// It calls .bytes() on the buf reader and then calls .take on that byte iter.
+    ///
+    /// # RefCell and interior mutablility
+    ///
+    /// this function should really only be called once! The BufReader is wrapped in an option which
+    /// is then wrapped in a refcell. In short, even though this function only takes a &self, self
+    /// is mutated when this function is called.
+    ///
+    /// The reason this function has to do that is that it is reading from a buf_reader. The way the
+    /// function does that requires consuming the buf_reader which requires mutating self! This is a
+    /// side affect of the fact that reading from a stream or buf_reader requires more than a read
+    /// only reference (because the data is being moved out of some internal buffer).
+    ///
+    /// # panic
+    ///
+    /// i need to test more to determine when, if at all, this function will panic.
+    /// it calls `let body_reader = self.body_reader.borrow_mut().take();`
+    /// and uses that mutable borrow throughout the function.
+    ///
+    /// I figure this is safe as self.body_reader is not borrowed anywhere else and the borrow is
+    /// dropped immediately!
+    ///
+    /// There might be issues calling this function if you already have a &mut self but idk.
+    pub fn take_body_stream(&self, length: usize) -> std::io::Result<Vec<u8>> {
+        let body_reader = self.body_reader.borrow_mut().take();
+
+        if body_reader.is_none() {
+            io::Error::new(
+                io::ErrorKind::Other,
+                "error: already consumed the requests body",
+            );
+        }
+
+        body_reader.unwrap().bytes().take(length).collect()
+    } // todo test this function
 }
 
 #[cfg(test)]
