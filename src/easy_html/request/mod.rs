@@ -227,35 +227,34 @@ impl<'req, 'stream> TryFrom<&'req RawHttp<'stream>> for Request<'req> {
         let content_length = headers.get("Content-Length");
         let transfer_encoding = headers.get("Transfer-Encoding");
 
-        let raw_body: Option<Vec<u8>>;
+        let raw_body: Option<Vec<u8>> = match (content_length, transfer_encoding) {
+            (None, None) => None,
 
-        if content_length.is_none() && transfer_encoding.is_none() {
-            raw_body = None;
-        } else if content_length.is_some() && transfer_encoding.is_some() {
-            return Err(String::from(
-                "bad request: transfer encoding and content length provided",
-            ));
-        } else if let Some(encoding) = transfer_encoding {
-            // here we know that there is no content length
-            if *encoding != "Chunked" {
+            (Some(_), Some(_)) => {
                 return Err(String::from(
-                    "bad request: transfer encoding was not Chunked",
+                    "bad request: transfer encoding and content length provided",
                 ));
             }
 
-            // cannot yet handle this kind of request
-            todo!()
-        } else if let Some(raw_length) = content_length {
-            let length = raw_length.parse::<usize>().map_err(|e| e.to_string())?;
+            (None, Some(encoding)) => {
+                if *encoding != "Chunked" {
+                    return Err(String::from(
+                        "bad request: transfer encoding was not Chunked",
+                    ));
+                }
 
-            raw_body = {
+                // cannot yet handle this kind of request
+                todo!()
+            }
+
+            (Some(raw_length), None) => {
+                let length = raw_length.parse::<usize>().map_err(|e| e.to_string())?;
+
                 let body = value.take_body_stream(length).map_err(|e| e.to_string())?;
 
                 Some(body)
             }
-        } else {
-            unreachable!("one of the previous conditions must match")
-        }
+        };
 
         // add the body we just parsed (which may still be none) to the (now poorly named request)
         request_without_body.body = raw_body;
