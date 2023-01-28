@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 #[derive(Debug)]
 pub struct Request<'req> {
-    body: Option<&'req [u8]>, // todo not all payloads are not valid utf8
+    body: Option<Vec<u8>>, // todo not all payloads are not valid utf8
     headers: HashMap<&'req str, &'req str>,
     query_string_object: HashMap<&'req str, &'req str>,
     path: &'req str, // todo is it type String???
@@ -191,25 +191,39 @@ impl<'req> TryFrom<&'req Vec<u8>> for Request<'req> {
 impl<'req, 'stream> TryFrom<&'req RawHttp<'stream>> for Request<'req> {
     type Error = String;
 
+    /// # convert a RawHttp instance into a Request
+    ///
+    /// this function parses the headers and then uses them to determine
+    ///
+    /// 1. is there a body?
+    /// 2. how should that body be parsed
+    ///
+    /// # errors
+    ///
+    /// it will return an error if the headers are unable to be parsed
+    ///
+    /// all other errors have to do with determining how to parse the body and parsing the body
+    /// here are the rules this function uses to parse the request body:
+    /// https://greenbytes.de/tech/webdav/rfc7230.html#message.body.length
+    ///
+    /// #body parsing tldr:
+    ///
+    /// if the transfer_encoding is chunked we use that
+    /// if transfer_encoding is not chunked the request is invalid
+    /// if there is transfer_encoding and content length then its invalid (no request smuggling!)
+    /// multiple content lengths or a content_length with an ivalid value means an error
+    /// if theres no transfer_encoding but there is a content length we use that
+    /// otherwise, the request has no body
     fn try_from(value: &'req RawHttp) -> Result<Self, Self::Error> {
         // convert the first line and headers into a &str
         let owned_lines = value.raw_headers();
         let lines: Vec<&str> = owned_lines.iter().map(|line| &**line).collect(); // see https://stackoverflow.com/questions/33216514/how-do-i-convert-a-vecstring-to-vecstr
 
-        let request_without_body = Request::try_from(lines)?;
+        let mut request_without_body = Request::try_from(lines)?;
 
         // now we parse the headers to determine if there is a body and how to parse it
         let headers = &request_without_body.headers;
 
-        // see the link for how this server determines how to handle the body
-        // https://greenbytes.de/tech/webdav/rfc7230.html#message.body.length
-        // tldr:
-        // if the transfer_encoding is chunked we use that
-        // if transfer_encoding is not chunked the request is invalid
-        // if there is transfer_encoding and content length then its invalid (no request smuggling!)
-        // multiple content lengths or a content_length with an ivalid value means an error
-        // if theres no transfer_encoding but there is a content length we use that
-        // otherwise, the request has no body
         let content_length = headers.get("Content-Length");
         let transfer_encoding = headers.get("Transfer-Encoding");
 
@@ -232,11 +246,21 @@ impl<'req, 'stream> TryFrom<&'req RawHttp<'stream>> for Request<'req> {
             // cannot yet handle this kind of request
             todo!()
         } else if let Some(raw_length) = content_length {
-            // parse the length
-            todo!()
+            let length = raw_length.parse::<usize>().map_err(|e| e.to_string())?;
+
+            raw_body = {
+                let body = value.take_body_stream(length).map_err(|e| e.to_string())?;
+
+                Some(body)
+            }
+        } else {
+            unreachable!("one of the previous conditions must match")
         }
 
-        todo!()
+        // add the body we just parsed (which may still be none) to the (now poorly named request)
+        request_without_body.body = raw_body;
+
+        Ok(request_without_body)
     }
 }
 
