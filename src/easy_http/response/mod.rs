@@ -24,28 +24,36 @@ impl Response {
         }
     }
 
-    pub fn get_header(&self, header: &str) -> Option<&str> {
-        todo!()
+    pub fn get_header(&self, header: &str) -> Option<&String> {
+        self.headers.get(header)
     }
 
-    pub fn get_mut_header(&mut self, header: &str) -> Option<&mut str> {
-        todo!()
+    pub fn get_mut_header(&mut self, header: &str) -> Option<&mut String> {
+        self.headers.get_mut(header)
     }
 
     pub fn set_header(&mut self, key: &str, value: &str) {
-        todo!()
+        self.headers.insert(key.to_string(), value.to_string());
     }
 
     pub fn try_delete_header(&mut self, header: &str) -> Result<(), String> {
-        todo!()
+        match self.headers.remove(header) {
+            Some(_) => Ok(()),
+            None => Err(String::from("header not present")),
+        }
     }
 
     pub fn status_code(&self) -> u16 {
         self.status_code
     }
 
-    pub fn set_status_code(&mut self) -> Result<(), String> {
-        todo!()
+    pub fn set_status_code(&mut self, code: u16) -> Result<(), String> {
+        if code < 100 || code > 599 {
+            Err(String::from("ivalid status code!"))
+        } else {
+            self.status_code = code;
+            Ok(())
+        }
     }
 
     pub fn get_body(&self) -> &Vec<u8> {
@@ -53,7 +61,7 @@ impl Response {
     }
 
     pub fn get_mut_body(&mut self) -> &mut Vec<u8> {
-        todo!()
+        &mut self.body
     }
 
     fn reason_phrase(status_code: u16) -> String {
