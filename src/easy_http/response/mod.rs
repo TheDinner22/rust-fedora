@@ -86,7 +86,7 @@ impl Response {
     /// than 599
     fn into_bytes(self) -> Vec<u8> {
         // things to construct a status line
-        const HTTP_VER: &str = "HTTP/1.1 200 OK";
+        const HTTP_VER: &str = "HTTP/1.1";
         let reason_phrase = Response::reason_phrase(self.status_code);
 
         let status_line = format!("{} {} {}\r\n", HTTP_VER, self.status_code, reason_phrase);
