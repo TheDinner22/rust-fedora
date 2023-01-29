@@ -9,6 +9,13 @@ pub struct Response {
 }
 
 impl Response {
+    // # Create a new Response
+    //
+    // This is part of the struct's public API;
+    // However, you really should never use it!
+    //
+    // A much better pattern for constructing a response is using `from` or `into`
+    // as those traits are (or will be) implemented for most types.
     pub fn new(status_code: u16, headers: HashMap<String, String>, body: Vec<u8>) -> Self {
         Response {
             status_code,
