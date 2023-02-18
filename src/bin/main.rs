@@ -3,8 +3,9 @@
 
 use rust_fedora::server;
 
-fn main(){
-    let _my_server = server::try_start(3000).unwrap();
+#[tokio::main]
+async fn main(){
+    let _my_server = server::try_start(3000).await.unwrap();
 
     // my_server.add_route("/", |data| {
     //     return 200.into(); 
