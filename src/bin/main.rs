@@ -1,8 +1,10 @@
 // rust-fedora is a library crate
 // this binary is an example of how you could/should use the library
 
+use rust_fedora::server;
+
 fn main(){
-    let _my_server = Server::try_start(3000).unwrap();
+    let _my_server = server::try_start(3000).unwrap();
 
     // my_server.add_route("/", |data| {
     //     return 200.into(); 
