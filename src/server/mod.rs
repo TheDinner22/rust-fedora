@@ -13,14 +13,25 @@ use http_body_util::{combinators::BoxBody, BodyExt, Empty, Full};
 use hyper::body::Frame;
 use hyper::server::conn::http1;
 use hyper::service::service_fn;
-use hyper::{body::Body, Method, Request, Response, StatusCode};
+use hyper::{body::Body, Method, Request, Response, StatusCode, HeaderMap};
 use tokio::net::TcpListener;
 
-fn handle_request() -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Error> {
-    todo!()
-}
 
 mod query_string;
+mod lazy_body;
+
+use query_string::QueryString;
+use lazy_body::LazyBody;
+async fn _handle_request<'req>(
+    _path: &str,
+    _method: Method,
+    _query_string_object: QueryString<'req>,
+    _header: HeaderMap,
+    _body: LazyBody
+    ) -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Error>
+{
+    todo!()
+}
 
 /// This is our service handler. It receives a Request, routes on its
 /// path, and returns a Future of a Response.
