@@ -17,7 +17,6 @@ use hyper::{body::Body, Method, Request, Response, StatusCode};
 use tokio::net::TcpListener;
 
 use std::collections::HashMap;
-use std::cell::RefCell;
 
 fn handle_request() -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Error> {
     todo!()
@@ -35,47 +34,48 @@ fn handle_request() -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Err
 /// let query_params = LazyQueryString::new(URI);
 /// assert_eq!(2, query_params.query_params().len());
 ///
-/// // invalid params are ignored TODO
+/// // invalid params are ignored
+/// let URI = "https://some_website/users.com?these are all invalid params and will be
+/// ignored&valid= params are still parsed";
+/// let query_params = LazyQueryString::new(URI);
+/// assert_eq!(1, query_params.query_params().len());
 ///
 /// ```
 ///
-/// ## implementation
-/// This struct is implemented with following idea:
-/// the query string object should be exposed to all handler functions; however,
-/// if a handler function did not use the query string object, the &str was parsed for no reason 
-/// and a HashMap was allocated for no reason!
+/// ## TODOS
+/// I would like to use std::cell::LazyCell for lazy loading; however, it is still not allowed on stable rust.
+/// If I want to try to add Lazy loading in the future,
+/// this page https://stackoverflow.com/questions/29401626/how-do-i-return-a-reference-to-something-inside-a-refcell-without-breaking-encap
+/// shows a way I could do lazy loading with a RefCell and still return a reference (not A std::cell::Ref) 
+/// (or at least a struct which could be coerced into a reference).
 ///
-/// So, this struct will not parse the &str into a HashMap unless the query_params are accesed.
-/// This way, handlers can always choose to use the query string object; at the same time, those
-/// which do not use it do not lose time or memory on an unused HashMap
+/// ## implementation
+/// Callig the new function parses the given string and creates a HashMap.
+/// You can the get a reference to that HashMap with the query_params method. 
+/// Thats it!
+///
+/// repeated fields are ignored (only one is stored in the HashMap)!
+/// invalid fields are also ignored
 ///
 /// ## panic
 ///
 /// this struct and its methods should never panic.
-struct LazyQueryString<'req> {
-    raw_params: &'req str,
-    param_map: Option<HashMap<&'req str, &'req str>>
+struct QueryString<'req> {
+    param_map: HashMap<&'req str, &'req str>
 }
 
-impl<'req> LazyQueryString<'req> {
+impl<'req> QueryString<'req> {
     fn new(query_string: &'req str) -> Self {
-        LazyQueryString { raw_params: query_string, param_map: None }
-    }
-
-    // todo this should not be &mut using some horrid trick
-    fn parse_raw_params(&mut self) {
-        let query_map = self.raw_params
+        let query_map = query_string
             .split('&')
             .filter_map(|pair| pair.split_once('='))
             .collect();
 
-        self.param_map = Some(query_map);
+        QueryString { param_map: query_map }
     }
 
-    fn query_params(&mut self) -> &HashMap<&'req str, &'req str> {
-        if self.param_map.is_none() { self.parse_raw_params() }
-
-        self.param_map.as_ref().expect("the option will always be Some. If it were none parse_raw_params would have been called")
+    fn query_params(&self) -> &HashMap<&str, &str> {
+        &self.param_map
     }
 }
 
