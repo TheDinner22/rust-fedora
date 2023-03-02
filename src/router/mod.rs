@@ -6,7 +6,10 @@ use http_body_util::{combinators::BoxBody, BodyExt, Empty, Full};
 use crate::server::query_string::QueryString;
 use crate::server::lazy_body::LazyBody;
 
-pub fn handle_request<'req>(
+// you are having this issue with hyper error and anyhow error
+// https://github.com/oxidecomputer/dropshot/issues/37
+
+pub async fn handle_request<'req>(
     path: &str,
     method: Method,
     query_string_object: QueryString<'req>,
@@ -21,7 +24,12 @@ pub fn handle_request<'req>(
         ))),
 
         // Simply echo the body back to the client.
-        (Method::POST, "/echo") => Ok(Response::new(req.into_body().boxed())),
+        (Method::POST, "/echo") => {
+            let b = body.into_bytes().await?;
+            Ok(
+                Response::new(full(b))
+            )
+        },
 
         // Convert to uppercase before sending back to client using a stream.
         (Method::POST, "/echo/uppercase") => {

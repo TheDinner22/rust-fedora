@@ -8,28 +8,33 @@
 
 use std::net::SocketAddr;
 
-use hyper::body::Bytes;
 use http_body_util::{combinators::BoxBody, BodyExt, Empty, Full};
+use hyper::body::Bytes;
 // for streaming the body use hyper::body::Frame;
 use hyper::server::conn::http1;
 use hyper::service::service_fn;
-use hyper::{body::Body, Method, Request, Response, StatusCode, HeaderMap};
+use hyper::{body::Body, HeaderMap, Method, Request, Response, StatusCode};
 use tokio::net::TcpListener;
 
 use crate::router;
 
-pub mod query_string;
 pub mod lazy_body;
+pub mod query_string;
 
 /// This is our service handler. It receives a Request, routes on its
 /// path, and returns a Future of a Response.
 async fn fedora(
-    req: Request<hyper::body::Incoming>
+    req: Request<hyper::body::Incoming>,
 ) -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Error> {
     let (parts, incoming_body) = req.into_parts();
-    router::handle_request(parts.uri.path(), parts.method, query_string::QueryString::new(parts.uri.query().unwrap_or("")), parts.headers, lazy_body::LazyBody::new(incoming_body))
+    router::handle_request(
+        parts.uri.path(),
+        parts.method,
+        query_string::QueryString::new(parts.uri.query().unwrap_or("")),
+        parts.headers,
+        lazy_body::LazyBody::new(incoming_body),
+    ).await // TODO does this block for no reason
 }
-
 
 pub async fn try_start(port: u16) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let addr = SocketAddr::from(([127, 0, 0, 1], port));
