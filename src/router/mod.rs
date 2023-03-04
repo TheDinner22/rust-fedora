@@ -6,6 +6,8 @@ use http_body_util::{combinators::BoxBody, BodyExt, Empty, Full};
 use crate::server::query_string::QueryString;
 use crate::server::lazy_body::LazyBody;
 
+mod public;
+
 pub async fn handle_request<'req>(
     path: &str,
     method: Method,
