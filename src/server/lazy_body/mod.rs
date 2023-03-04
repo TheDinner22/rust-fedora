@@ -1,10 +1,23 @@
 use anyhow::{bail, Ok};
 use http_body_util::BodyExt;
 
+// code for me for later
+//
+// To protect our server, reject requests with bodies larger than
+// 64kbs of data.
+// let max = req.body().size_hint().upper().unwrap_or(u64::MAX);
+// if max > 1024 * 64 {
+//     let mut resp = Response::new(full("Body too big"));
+//     *resp.status_mut() = hyper::StatusCode::PAYLOAD_TOO_LARGE;
+//     return Ok(resp);
+// }
+
 /// # a wrapper for an incoming http request body
 ///
 /// You cannot stream the body with this struct, only await the entire body
 /// and collect it as Bytes
+///
+/// TODO this needs to do a check to make sure the body is not too big
 ///
 /// ## async await
 ///
