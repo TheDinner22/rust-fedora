@@ -6,15 +6,23 @@ use http_body_util::{combinators::BoxBody, BodyExt, Empty, Full};
 use crate::server::query_string::QueryString;
 use crate::server::lazy_body::LazyBody;
 
+// goals for the router
+// easy to enable fs routing
+// easy to add custom (usually api) routes
 
-pub async fn handle_request<'req>(
-    path: &str,
-    method: Method,
-    query_string_object: QueryString<'req>,
-    header: HeaderMap,
-    body: LazyBody
-    ) -> anyhow::Result<Response<BoxBody<Bytes, hyper::Error>>>
-{
+/// This is our service handler. It receives a Request, routes on its
+/// path, and returns a Future of a Response.
+pub async fn handle_request(
+    req: hyper::Request<hyper::body::Incoming>,
+) -> anyhow::Result<Response<BoxBody<Bytes, hyper::Error>>> {
+    let (parts, incoming_body) = req.into_parts();
+
+    let path: &str = parts.uri.path();
+    let method: Method = parts.method;
+    let query_string_object: QueryString = QueryString::new(parts.uri.query().unwrap_or(""));
+    let header: HeaderMap = parts.headers;
+    let body: LazyBody = LazyBody::new(incoming_body);
+
     match (method, path) {
         // Serve some instructions at /
         (Method::GET, "/") => Ok(Response::new(full(

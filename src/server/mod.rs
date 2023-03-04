@@ -1,10 +1,5 @@
 // see here for furhtering tut https://hyper.rs/guides/1/server/echo/
-
-// query string - made a struct for it
-// method - ez with req.method()
-// path - ez with req.uri.path()
-// headers - their should be no issues working with req.headers() as its just a HashMap
-// body
+// this ends up being boilerplate for working with hyper
 
 use std::net::SocketAddr;
 
@@ -21,21 +16,6 @@ use crate::router;
 pub mod lazy_body;
 pub mod query_string;
 
-/// This is our service handler. It receives a Request, routes on its
-/// path, and returns a Future of a Response.
-async fn fedora(
-    req: Request<hyper::body::Incoming>,
-) -> anyhow::Result<Response<BoxBody<Bytes, hyper::Error>>> {
-    let (parts, incoming_body) = req.into_parts();
-    router::handle_request(
-        parts.uri.path(),
-        parts.method,
-        query_string::QueryString::new(parts.uri.query().unwrap_or("")),
-        parts.headers,
-        lazy_body::LazyBody::new(incoming_body),
-    ).await // TODO does this block for no reason
-}
-
 pub async fn try_start(port: u16) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let addr = SocketAddr::from(([127, 0, 0, 1], port));
 
@@ -51,7 +31,7 @@ pub async fn try_start(port: u16) -> Result<(), Box<dyn std::error::Error + Send
             // Finally, we bind the incoming connection to our `hello` service
             if let Err(err) = http1::Builder::new()
                 // `service_fn` converts our function in a `Service`
-                .serve_connection(stream, service_fn(fedora))
+                .serve_connection(stream, service_fn(router::handle_request))
                 .await
             {
                 println!("Error serving connection: {:?}", err);
