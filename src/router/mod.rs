@@ -6,6 +6,13 @@ use http_body_util::{combinators::BoxBody, BodyExt, Empty, Full};
 use crate::server::query_string::QueryString;
 use crate::server::lazy_body::LazyBody;
 
+// so the router is a service
+// and you want to implement it and or force the user to impl it?
+// its a struct which implement's this trait
+// https://docs.rs/hyper/1.0.0-rc.3/hyper/service/trait.Service.html#associatedtype.Response
+// and maybe has some built-in file routing and or a method or macro to 
+// make api routes
+
 // goals for the router
 // easy to enable fs routing
 // easy to add custom (usually api) routes
