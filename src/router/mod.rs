@@ -31,21 +31,11 @@ pub async fn handle_request<'req>(
             )
         },
 
-        // Convert to uppercase before sending back to client using a stream.
+        // Convert to uppercase before sending back to client
         (Method::POST, "/echo/uppercase") => {
-            let frame_stream = req.into_body().map_frame(|frame| {
-                let frame = if let Ok(data) = frame.into_data() {
-                    data.iter()
-                        .map(|byte| byte.to_ascii_uppercase())
-                        .collect::<Bytes>()
-                } else {
-                    Bytes::new()
-                };
+            let b = body.into_bytes().await?.to_ascii_uppercase();
 
-                Frame::data(frame)
-            });
-
-            Ok(Response::new(frame_stream.boxed()))
+            Ok(Response::new(full(b)))
         }
 
         // Reverse the entire body before sending back to the client.
@@ -55,18 +45,9 @@ pub async fn handle_request<'req>(
         // So here we do `.await` on the future, waiting on concatenating the full body,
         // then afterwards the content can be reversed. Only then can we return a `Response`.
         (Method::POST, "/echo/reversed") => {
-            // To protect our server, reject requests with bodies larger than
-            // 64kbs of data.
-            let max = req.body().size_hint().upper().unwrap_or(u64::MAX);
-            if max > 1024 * 64 {
-                let mut resp = Response::new(full("Body too big"));
-                *resp.status_mut() = hyper::StatusCode::PAYLOAD_TOO_LARGE;
-                return Ok(resp);
-            }
+            let b = body.into_bytes().await?;
 
-            let whole_body = req.collect().await?.to_bytes();
-
-            let reversed_body = whole_body.iter().rev().cloned().collect::<Vec<u8>>();
+            let reversed_body = b.iter().rev().cloned().collect::<Vec<u8>>();
             Ok(Response::new(full(reversed_body)))
         }
 
