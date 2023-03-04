@@ -15,7 +15,7 @@ pub async fn handle_request<'req>(
     query_string_object: QueryString<'req>,
     header: HeaderMap,
     body: LazyBody
-    ) -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Error>
+    ) -> anyhow::Result<Response<BoxBody<Bytes, hyper::Error>>>
 {
     match (method, path) {
         // Serve some instructions at /

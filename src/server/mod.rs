@@ -25,7 +25,7 @@ pub mod query_string;
 /// path, and returns a Future of a Response.
 async fn fedora(
     req: Request<hyper::body::Incoming>,
-) -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Error> {
+) -> anyhow::Result<Response<BoxBody<Bytes, hyper::Error>>> {
     let (parts, incoming_body) = req.into_parts();
     router::handle_request(
         parts.uri.path(),
