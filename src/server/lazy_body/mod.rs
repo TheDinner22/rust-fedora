@@ -1,16 +1,6 @@
 use anyhow::{bail, Ok};
 use http_body_util::BodyExt;
-
-// code for me for later
-//
-// To protect our server, reject requests with bodies larger than
-// 64kbs of data.
-// let max = req.body().size_hint().upper().unwrap_or(u64::MAX);
-// if max > 1024 * 64 {
-//     let mut resp = Response::new(full("Body too big"));
-//     *resp.status_mut() = hyper::StatusCode::PAYLOAD_TOO_LARGE;
-//     return Ok(resp);
-// }
+use hyper::body::Body;
 
 /// # a wrapper for an incoming http request body
 ///
@@ -49,6 +39,13 @@ impl LazyBody {
     async fn await_body(&mut self) -> anyhow::Result<()> {
         // if the inc stream has yet to be parsed, parse it!
         if let Some(incoming_strem) = self.incoming.take() {
+            // To protect our server, reject requests with bodies larger than
+            // 64kbs of data.
+            let max = incoming_strem.size_hint().upper().unwrap_or(u64::MAX);
+            if max > 1024 * 64 {
+                bail!("body too big");
+            }
+
             self.raw_body = Some(incoming_strem.collect().await?.to_bytes());
         }
 
