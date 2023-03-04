@@ -14,13 +14,11 @@ async fn main(){
 
 /*
 todo for project:
-- better types (implement to and from everywhere)
-- helper functions in a helper module
-- lots of tests
-- other ways to add routes
-- config vars
+- ways to add routes
+- routing in general
+- config vars (macros would make this awesome)
 - ez logs
-- https
+- https?
 - better front end api
 - public folder
 - html or the other thing??? both??
