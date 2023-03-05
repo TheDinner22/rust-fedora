@@ -35,7 +35,7 @@ pub async fn try_start(
             // Finally, we bind the incoming connection to our `hello` service
             if let Err(err) = http1::Builder::new()
                 // `service_fn` converts our function in a `Service`
-                .serve_connection(stream, svc::Svc::new() )
+                .serve_connection(stream, router::FedoraRouter::new() )
                 .await
             {
                 println!("Error serving connection: {:?}", err);
