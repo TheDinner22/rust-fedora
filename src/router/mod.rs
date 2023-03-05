@@ -1,21 +1,73 @@
-use hyper::body::Frame;
-use hyper::body::Bytes;
-use hyper::{body::Body, Method, Response, StatusCode, HeaderMap};
+use anyhow::Ok;
 use http_body_util::{combinators::BoxBody, BodyExt, Empty, Full};
+use hyper::body::Bytes;
+use hyper::Request;
+// use hyper::body::Frame;
+use hyper::{body::Body, HeaderMap, Method, Response, StatusCode};
 
-use crate::server::query_string::QueryString;
 use crate::server::lazy_body::LazyBody;
+use crate::server::query_string::QueryString;
 
 // so the router is a service
 // and you want to implement it and or force the user to impl it?
 // its a struct which implement's this trait
 // https://docs.rs/hyper/1.0.0-rc.3/hyper/service/trait.Service.html#associatedtype.Response
-// and maybe has some built-in file routing and or a method or macro to 
+// and maybe has some built-in file routing and or a method or macro to
 // make api routes
 
 // goals for the router
 // easy to enable fs routing
 // easy to add custom (usually api) routes
+
+// std::pin::Pin<Box<dyn std::future::Future<Output = Result<Response<Self::Res>, Self::Err>>>>
+// is really fucked up way to say:
+// async FnOnce closure that returns a Future which will resolve to
+// A result.
+// The Ok varient is an http response with a body that has type Res
+// The Err varient is some error with type error
+
+pub struct FedoraRouter;
+
+impl FedoraRouter {
+    fn add_route(&mut self) -> anyhow::Result<()> {
+        todo!()
+    }
+
+    fn add_file_route(&mut self) -> anyhow::Result<()> {
+        todo!()
+    }
+
+    async fn handle_request<'a>(
+        &self,
+        path: &str,
+        method: Method,
+        query_string_object: QueryString<'a>,
+        headers: HeaderMap,
+        body: LazyBody,
+    ) -> Result<Response<BoxBody<Bytes, hyper::Error>>, anyhow::Error> {
+        todo!()
+    }
+}
+
+impl hyper::service::Service<Request<hyper::body::Incoming>> for FedoraRouter {
+    type Response = Response<BoxBody<Bytes, hyper::Error>>;
+
+    type Error = anyhow::Error;
+
+    type Future = std::pin::Pin<Box<dyn std::future::Future<Output = Result<Self::Response, Self::Error>> + Send>>;
+
+    fn call(&mut self, req: Request<hyper::body::Incoming>) -> Self::Future {
+        let (parts, incoming_body) = req.into_parts();
+
+        let path: &str = parts.uri.path();
+        let method: Method = parts.method;
+        let query_string_object: QueryString = QueryString::new(parts.uri.query().unwrap_or(""));
+        let headers: HeaderMap = parts.headers;
+        let body: LazyBody = LazyBody::new(incoming_body);
+
+        todo!()
+    }
+}
 
 /// This is our service handler. It receives a Request, routes on its
 /// path, and returns a Future of a Response.
@@ -39,10 +91,8 @@ pub async fn handle_request(
         // Simply echo the body back to the client.
         (Method::POST, "/echo") => {
             let b = body.into_bytes().await?;
-            Ok(
-                Response::new(full(b))
-            )
-        },
+            Ok(Response::new(full(b)))
+        }
 
         // Convert to uppercase before sending back to client
         (Method::POST, "/echo/uppercase") => {
@@ -87,4 +137,3 @@ fn full<T: Into<Bytes>>(chunk: T) -> BoxBody<Bytes, hyper::Error> {
         .map_err(|never| match never {})
         .boxed()
 }
-

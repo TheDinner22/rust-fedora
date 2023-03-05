@@ -1,6 +1,8 @@
 pub mod server;
 mod router;
 
+pub mod svc;
+
 #[cfg(test)]
 mod tests {
     #[test]

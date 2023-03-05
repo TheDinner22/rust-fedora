@@ -12,11 +12,15 @@ use hyper::{body::Body, HeaderMap, Method, Request, Response, StatusCode};
 use tokio::net::TcpListener;
 
 use crate::router;
+use crate::svc;
 
 pub mod lazy_body;
 pub mod query_string;
 
-pub async fn try_start(port: u16) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+pub async fn try_start(
+    port: u16,
+    //router: router::FedoraRouter,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let addr = SocketAddr::from(([127, 0, 0, 1], port));
 
     // We create a TcpListener and bind it to 127.0.0.1:port
@@ -31,7 +35,7 @@ pub async fn try_start(port: u16) -> Result<(), Box<dyn std::error::Error + Send
             // Finally, we bind the incoming connection to our `hello` service
             if let Err(err) = http1::Builder::new()
                 // `service_fn` converts our function in a `Service`
-                .serve_connection(stream, service_fn(router::handle_request))
+                .serve_connection(stream, svc::Svc::new() )
                 .await
             {
                 println!("Error serving connection: {:?}", err);
