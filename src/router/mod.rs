@@ -43,7 +43,7 @@ impl FedoraRouter {
         todo!()
     }
 
-    async fn handle_request<'a>(
+    pub async fn handle_request<'a>(
         &self,
         path: &str,
         method: Method,

@@ -20,7 +20,7 @@ pub mod query_string;
 
 pub async fn try_start(
     port: u16,
-    router: router::FedoraRouter,
+    fedora_router: router::FedoraRouter,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     // the service function which will handle every request
     // it is defined inside of the trystart function so that
@@ -36,6 +36,9 @@ pub async fn try_start(
         let header: HeaderMap = parts.headers;
         let body: LazyBody = LazyBody::new(incoming_body);
 
+        fedora_router.handle_request
+
+        /*
         match (method, path) {
             // Serve some instructions at /
             (Method::GET, "/") => {
@@ -75,6 +78,7 @@ pub async fn try_start(
             }
 
         }
+        */
     }
 
     let addr = SocketAddr::from(([127, 0, 0, 1], port));
