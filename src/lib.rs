@@ -1,6 +1,8 @@
 pub mod server;
 mod router;
 
+pub use router::FedoraRouter;
+
 pub mod svc;
 
 #[cfg(test)]
